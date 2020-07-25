@@ -25,6 +25,12 @@ $ npm run start
 $ npm run generate
 ```
 
+### Configuración del entorno: 
+Asegúrate de configurar correctamente las siguientes variables de entorno:
+BASE_URL_YEEKO  _En localhost recomendamos localhost:8000/api-rest si estás usando nuestra API de backend_
+GOOGLE_ANALYTICS_ID _Si deseas dar seguimiento a tu aplicación, pon el id de tu google analytics UA-XXXXXXXXX-X
+
+
 ### Impulsado por:
 Proyecto impulsado por Ollin, AC. (ollinac.org)
 
