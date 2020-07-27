@@ -1,0 +1,21 @@
+{
+  "name": "pp-CDMX-frontend",
+  "version": "0.1.0",
+  "description": "Mapa y visualización de datos sobre el presupuesto participativo de la Ciudad de México",
+  "author": "Yeeko Inteligencia Colectiva",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate"
+  },
+  "dependencies": {
+    "@nuxtjs/axios": "^5.3.6",
+    "nuxt": "^2.0.0",
+    "vue-the-mask": "^0.11.1"
+  },
+  "devDependencies": {
+    "@nuxtjs/vuetify": "^1.0.0"
+  }
+}

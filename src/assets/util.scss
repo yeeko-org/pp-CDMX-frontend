@@ -1,0 +1,17 @@
+.no-wrap{
+  word-break: normal !important;
+}
+#app{
+  margin: auto;
+  max-width: 1040px;
+}
+a{
+  text-decoration: none;
+  &:hover{
+    text-decoration: underline;
+  }
+}
+.pointer{
+  cursor: pointer;
+  user-select: none;
+}
