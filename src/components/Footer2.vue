@@ -14,13 +14,24 @@
         <v-col cols="8">
 
           <v-card-title class="subtitle-1 font-weight-bold py-1">
-            Proyecto Visualizando el Presupuesto Participativo
+            Datos cívicos a tu alcance. Historia del presupuesto participativo
           </v-card-title>
           <v-card-text class="primary--text pt-0 pb-1 text-left">
-            Cada año, el Congreso Local de la Ciudad de México aprueba el presupuesto de la ciudad y las Alcaldías. Una parte del destinado a  las Alcaldías se llama  presupuesto participativo, el cual se aplica en proyectos propuestos por los ciudadanos de una colonia o pueblo.
+            A través de esta página, Ollin, Jóvenes en Movimiento busca ofrecerte
+            una herramienta de <b>transparencia</b>, para que conozcas los datos más
+            relevantes de los proyectos ganadores de la consulta del Presupuesto
+            Participativo en la Ciudad de México, a lo largo del tiempo. <br>
+            Puedes consultar distintos indicadores que preparamos para que
+            puedas explorar más acerca de este ejercicio ciudadano.<span v-if="false">
+            puedes consultar distintos indicadores la descripción del proyecto, la variación entre el
+            presupuesto aprobado y ejercido; la cantidad de votos emitidos y la
+            cantidad de votos con la que ganó el proyecto triunfante en cada
+            colonia, barrio, pueblo, así como la categoría de clasificación brindada
+            tanto por el Instituto Electoral de la Ciudad de México, como por
+            aquella elaborada por nuestra organización.</span>
           </v-card-text>
         </v-col>
-        <v-col cols="4" align="start" class="text-center">
+        <v-col cols="4" class="text-center">
           <a 
             href="https://nosotrxs.org/"
             class="font-weight-bold text-h5 black--text"
@@ -32,7 +43,6 @@
           <v-btn
             v-for="net in networks"
             :key="net.icon"
-            align="end"
             class="mx-4 primary--text"
             icon
             large

@@ -1,7 +1,5 @@
 <script>
 
-//import * as d3 from 'd3';
-
 export default {
   name: 'AutoComplete',
   props:{
@@ -46,14 +44,6 @@ export default {
       filtered_items: [],
       response: undefined,
       count: 0,
-      keys: [
-        {"name":"real_name", "weight": 0.4},
-        {"name":"clasif_name", "weight": 0.5},
-        {"name":"alter_clasifs", "weight": 0.3},
-        {"name":"number_unity", "weight": 0.8},
-        {"name":"prev_clasif_name", "weight": 0.7},
-        {"name":"municipality", "weight": 0.2}
-      ],
       rules: {
         defined_n: v => v !== undefined || 'Escribe la respuesta',
       },
@@ -64,62 +54,69 @@ export default {
       console.log("text",str)
       this.response_text=str
       this.count = 0
-      if (!this.special_items) return
+      //if (!this.special_items) return
 
       if (!str && this.response){
         console.log("llego acá")
         this.filtered_items = this.all_items
         return
       }
-      if(!str)
+      if(str ? str.length < 3 : true){
         return
+      }
 
-      str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-      var first_number = str.match(/\d+/)
+      str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+      //var first_number = str.match(/\d+/)
       var words = str.split(/\d+|\s/)
-      words = words.filter(item => item && item !== "de")
-      var all_words = words.map(word=>({'count':0, 'text':word, 'is_number':false}))
+      console.log(Date.now())
 
-      if (first_number)
-        all_words.push({'count':0, 'text':first_number[0], 'is_number': true})
 
-      var categ_hosp = this.all_items.map(hosp=>{
-        var all_content = this.keys.reduce((itm_str, field)=>
-          hosp[field.name] 
-            ? itm_str.concat(itm_str? ' ' : '', hosp[field.name]) 
-            : itm_str
-        ,'')
-        hosp.all_content = all_content.normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "").toLowerCase()
-        hosp.matches = all_words.reduce((score, word)=>{
-          if(hosp.all_content.includes(word.text)){
-            word.count++
-            score++
-            if (word.is_number && hosp.number_unity)
-              score+= hosp.number_unity == word.text ? 2 : 0
-          }
+      //words = words.filter(item => item && item !== "de" && item !== "colonia")
+      var all_words = words//= words.map(word=>({'count':0, 'text':word}))
+      console.log(all_words)
+      var categ_items = this.all_items.map(item=>{
+        item.matches = all_words.reduce((score, word, idx)=>{
+          if (!item)
+            console.log(item)
+          if(item.name.includes(word)){
+            score+=0.8
+            if(item.townhall_obj.name_upper.includes(word.text)){
+              score+=0.3
+            }          
+            if(item.st_obj.name.includes(word.text)){
+              score+=0.1
+            }
+            if (item.townhall_obj.name_upper.includes(str)){
+              score+=0.5
+            }
+          }          
           return score
-        },0)
-        return hosp
+        },0.0)
+        return item
       })
-      categ_hosp = categ_hosp.filter(hosp=>hosp.matches)
-      this.filtered_items = categ_hosp/*.sort((x, y)=>
-         d3.descending(x.matches, y.matches))*/
-      this.filtered_items.push({[this.field_text]: str, 'id':0})
+      //console.log(categ_items)
+      categ_items = categ_items.filter(item=>item.matches>0)
+      this.filtered_items = categ_items.sort((x, y)=>
+        this.descending(x.matches, y.matches))
+      //console.log(this.filtered_items)
+      console.log(Date.now())
       console.log(this.filtered_items)
+
     },
     changeValue(ev){
       console.log("val",ev)
-      console.log(this.response_text)
-      if (ev == 0)
-        this.response_string = this.response_text
-      else
-        this.response_string = undefined
       this.dont_match = false
       this.emitData()
     },
+
+    descending(a, b) {
+      return b < a ? -1 : b > a ? 1 : b >= a ? 0 : NaN;
+    },
+
     filterItems(item, queryText, itemText){
-      return this.special_items ? true : this.filterOptions(item, queryText, itemText)
+      return true /*this.special_items 
+        ? true 
+        : this.filterOptions(item, queryText, itemText)*/
     },
     filterOptions(item, queryText, itemText){
       if (item.id == 0) return !this.count
@@ -135,17 +132,11 @@ export default {
     },
     blurInput(str){
       console.log("blur",str)
-      if (!this.response && this.response_text){
-        this.dont_match = true
-        this.response_string = this.response_text
-        this.response = 0
-      }
       this.emitData()
     },
     buildItems(){
-      this.all_items.push({[this.field_text]: null, 'name':'', 'id':0})
       this.filtered_items = this.all_items.filter(itm=>
-        this.special_items? itm.id : itm)
+        this.special_items ? itm.id : itm)
     },
     emitData(){
       var new_value=this.response || this.response_string
@@ -158,8 +149,12 @@ export default {
   created(){
     this.buildItems()
   },
+  mounted(){
+    console.log(this.filtered_items)
+  }
 }
 </script>
+
 <template>
   <v-autocomplete
     clearable
@@ -171,13 +166,10 @@ export default {
     :name="model"
     item-value="id"
     :item-text="field_text"
-    
     @update:search-input="changeText($event)"
     @blur="blurInput($event)"
     @change="changeValue($event)"
-    :rules="[rules.defined_n]"
     :filter="filterItems"
-    hide-no-data
   >
     <template v-slot:selection="data">
       <span>
@@ -194,13 +186,13 @@ export default {
     <template v-slot:item="data">
       <div class="my-2">
         <b v-if="special_items">{{data.item.prev_clasif_name}}</b>
-        <span v-if="data.item.id==0" class="primary--text">Agregar: </span>
+        <span v-if="true">{{data.item.st_obj.emoji}}</span>
+        <v-icon v-else color="primary">fa-{{data.item.st_obj.icon}}</v-icon>
         {{data.item[field_text]}}
-        <span v-if="data.item[field_text]==' '">{{response_text}}</span>
+        <span class="grey--text text--darken-1 ml-2">
+          ({{data.item.townhall_obj.name}})
+        </span>
         <template v-if="special_items">
-          <span class="grey--text text--darken-1 ml-3" v-if="data.item.total_unities<70">
-            (Munic {{data.item.municipality}})
-          </span>
           <br>
           <span >{{data.item.clasif_name}}</span>
         </template>
@@ -208,6 +200,8 @@ export default {
     </template>
   </v-autocomplete>
 </template>
+
+
 <style lang="scss" scoped>
 .up-report{
   margin-top : -150px;

@@ -1,16 +1,12 @@
 <script>
-import AddReport from "~/components/new_report/AddReport"
 import AutoComplete from "~/components/common/AutoComplete";
-import { mapState } from "vuex";
-
+import MapCDMX from "~/components/map/MapCDMX";
+import { mapState, mapActions } from "vuex";
 
 export default {
   layout: 'reports',
   name: 'MappingHolder',
-  components: {
-    AddReport,
-    AutoComplete
-  },
+  components: { AutoComplete, MapCDMX },
   data(){
     return {
       informer_type: '',
@@ -18,33 +14,73 @@ export default {
       is_mounted: false,
       suburb: undefined,
       show_map: false,
+      suburbs_arr: undefined,
+      complete_arr: undefined,
       //background: require("@/assets/background7.jpg"),
       //mapeo: require("@/assets/mapeo.png"),
       reports:[
         {title:'Primer Informe 2019', subtitle:'septiembre 2019', 
-          url: 'https:facebook.com'}
+          url: 'https//:facebook.com'}
       ],
 
     }
   },
   computed:{
     ...mapState({
-      suburbs: state => state.suburbs,
+      suburbs: state => state.reports.suburbs,
+      townhalls: state => state.reports.townhalls,
+      suburb_types: state => state.reports.suburb_types,
     }),
+    _suburbs_arr(){
+      var insts = this.institutions.filter(ins=>ins.relevance==1)
+      console.log(insts.push({'id': 0, 'public_name':'Otra'}))
+      return insts
+    },
+
+  },
+  watch:{
+    suburbs(subs){
+      //let baseData = [...subs]
+      //return 
+      this.townhalls.map(th=>{
+        th.name_upper= th.name.toUpperCase()
+      })
+      console.log(Date.now())
+      let last_th = undefined
+      let last_st = undefined
+      let last_th_id = 0
+      let last_st_id = 0
+      let builded_data = subs.map( sub=>{
+        if(last_th_id != sub.townhall){
+          last_th_id = sub.townhall
+          last_th = this.townhalls.find(th=>th.id == last_th_id)
+        }
+        if(last_st_id != sub.suburb_type){
+          last_st_id = sub.suburb_type
+          last_st = this.suburb_types.find(st=>st.id == last_st_id)
+        }
+        sub.townhall_obj = last_th
+        sub.st_obj = last_st
+        return sub
+      })
+      console.log(Date.now())
+      this.suburbs_arr = builded_data
+
+    }
+  },
+  created(){
+    this.fetchCatalogs().then(cats=>{
+      console.log("se cargó el catálogo")
+      this.show_map = true
+    })
+  },
+  mounted(){
+    this.is_mounted = true
   },
   methods: {
-    sel_informer(type_re) {
-      this.informer_type = type_re
-      this.goToForm()
-      this.want_add = true
-      this.$ga.event({
-        eventCategory: 'click',
-        eventAction: 'select_profile',
-      })
-    },
-    drawPin(state_id){
-      this.$refs.map.colocatePin(state_id)
-    },
+    ...mapActions({
+      fetchCatalogs : 'reports/FETCH_CATALOGS',
+    }),
     goToForm(offs=30){
       this.$vuetify.goTo('#save_form', 
         {duration: 400, offset: 30, easing:'easeInOutCubic'})
@@ -57,16 +93,6 @@ export default {
       })
     },
   },  
-  mounted(){
-    console.log("me monto")
-    this.is_mounted = true
-    this.$store.dispatch('reports/FETCH_CATALOGS').then((resp)=>{
-      console.log(resp)
-      this.$nextTick( () =>{
-        this.show_map = true
-      })
-    })
-  }
 }
 </script>
 
@@ -93,7 +119,6 @@ export default {
         >
           <span
             class="blue-back  px-2 primary--text"
-            
             :class="{'headline': $breakpoint.is.xs,
             'display-1': $breakpoint.is.smAndUp}"
           >
@@ -119,17 +144,24 @@ export default {
           <div class="text-h5 mt-3">
             Busca tu colonia y entérate del histórico del presupuesto participativo
           </div>
-          <AutoComplete
-            v-if="true"
-            :all_items="[3,4,5,6,7]"
-            :model="'institution2'"
-            label="Escribe tu colonia"
-            class="mt-5"
-            :field_text="'public_name'"
-            :special_field="'public_name'"
-            icon="search-location"
-            style="max-width: 400px;"
-          />
+          <v-skeleton-loader
+            class="mx-auto"
+            max-width="300"
+            type="heading"
+            :loading="!suburbs_arr"
+          >
+            <AutoComplete
+              v-if="suburbs_arr"
+              :all_items="suburbs_arr"
+              :model="'institution2'"
+              label="Escribe tu colonia o Alcaldía"
+              class="mt-5"
+              :field_text="'name'"
+              icon="search-location"
+              style="max-width: 400px;"
+            />
+            <div></div>
+          </v-skeleton-loader>          
           <v-select
             v-if="false"
             :items="['Iztapaluca', 'Array']"
@@ -144,8 +176,9 @@ export default {
         </v-col>
       </v-row>
     </v-card>
+    <MapCDMX v-if="show_map"/>
     <v-card v-if="false">
-      <v-row justify="center" align="center" class="fill-height">
+      <v-row justify="center" align="center" class="fill-height" v-if="false">
         <v-col align="center" justify="center" cols="12">
           <div class="text-h4 mt-3 py-4">
             Mapa de la Ciudad de México
