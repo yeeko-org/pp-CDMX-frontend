@@ -1,6 +1,7 @@
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
 //import mixinLegend from "./mixinLegend";
+import ppMixin from "~/mixins/ppMixin";
 
 import * as d3 from 'd3';
 import * as topojson from 'topojson';
@@ -10,7 +11,7 @@ export default {
   name: 'MapCDMX',
   components: {
   },
-  //mixins: [mixinLegend],
+  mixins: [ppMixin],
   props:{
   },
   data(){
@@ -149,7 +150,7 @@ export default {
       const g_container = svg.append("g")
           .attr('transform', `translate(0,${this.height - prov_square[1]})`)
 
-      g_container.append("rect")
+      let rect_container = g_container.append("rect")
           .attr("fill", "#5c3663eb")
           .attr('height', d=> prov_square[1])
           .attr('width', d=> prov_square[0])
@@ -166,11 +167,20 @@ export default {
             .attr('x', 6)
             .attr('y', `${prov_square[1]-4}`)
             //.attr('transform', `translate(0,0)`)
-
-
-
-          .attr('opacity', 0.65)
+            .attr('opacity', 0.65)
+            .on("click", function(d) {
+              //console.log(d)
+              //console.log(last_transform)
+              //last_transform.x+=1500
+              //last_transform.y+=1500
+              last_transform.k+=30000*3
+              last_transform.x+=8260*3
+              last_transform.y+=1640*3
+              zoomed(last_transform)
+            })
   
+
+
       var divisor = 1
 
       var suburb_circles = svg.append("g")
@@ -184,16 +194,21 @@ export default {
             vm.scale_color(vm.scale_participation(d.participation)))
 
       svg
-          .call(zoom)
-          .call(zoom.transform, 
-            d3.zoomIdentity
-              .translate(vm.width / 2, vm.height / 2)
-              .scale(-vm.initial_scale)
-              .translate(...projection(vm.initial_center))
-              .scale(-1));
+        .call(zoom)
+        .call(zoom.transform, 
+          d3.zoomIdentity
+            .translate(vm.width / 2, vm.height / 2)
+            .scale(-vm.initial_scale)
+            .translate(...projection(vm.initial_center))
+            .scale(-1));
 
       var last_k = undefined
+
+      var last_transform = undefined
+
       function zoomed(transform) {
+        //console.log(transform)
+        last_transform = transform
         const tiles = tile(transform);
         image = image.data(tiles, d => d).join("image")
             .attr("xlink:href", d => vm.url(...d))
@@ -212,16 +227,18 @@ export default {
           .attr('cy', d=> projection(d.real_geo_point)[1])
           .attr('r', d=> divisor * vm.scale_pob(d.pob_2010))
           .on("mouseover", d=>{
-            vm.getSuburb(d.id).then(res=>{
+            vm.getSuburb([d.id]).then(res=>{
               prov_text
                 .text(res.name)
+              let particip = vm.suburbs_geo.find(sub=>
+                sub.id == res.id).participation
+              let final_col = vm.scale_color(vm.scale_participation(particip))
               suburb_selected
                 .attr("d", render(vm.selected_suburb_shape))
-                .attr("fill", d=> {
-                  let particip = vm.suburbs_geo.find(sub=>
-                    sub.id == res.id).participation
-                  return vm.scale_color(vm.scale_participation(particip))
-                })
+                .attr("fill", final_col)
+              rect_container
+                .attr("fill", final_col)
+
             })
           })
         suburb_selected
@@ -235,10 +252,20 @@ export default {
 </script>
 
 <template>
-  <v-row>
-    <v-col cols="8" offset="2">      
+  <v-row no-gutters>
+    <v-col
+      cols="12"
+      sm="10"
+      md="8"
+      offset="0"
+      offset-sm="1"
+      offset-md="2"
+      class="px-1 py-3"
+    >
       <v-card id="MapCard">
-        <v-card-title class="no-wrap">Mapa Interactivo:</v-card-title>
+        <v-card-title class="no-wrap" v-intersect="propIntersect" section="map">
+          Mapa Interactivo:
+        </v-card-title>
         <svg v-if="true"
           id="MapCDMX"
         ></svg>

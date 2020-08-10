@@ -6,6 +6,8 @@ export const state = () => ({
   selected_suburb: undefined,
   selected_suburb_shape: undefined,
   data_builded: false,
+  suburb_id: undefined,
+  current_section: {},
 })
 
 export const mutations = {
@@ -28,11 +30,16 @@ export const mutations = {
       return sub
     })
     state.data_builded = true
-
-
   },
   SET_SELECTED_SUBURB(state, suburb_data){
     state.selected_suburb = suburb_data
+    console.log(state.selected_suburb)
+  },
+  SET_SUBURB_ID(state, sub_id){
+    state.suburb_id = sub_id
+  },
+  SET_SECTION(state, [section_name, value]){
+    state.current_section[section_name] = value
   },
   SET_SUBURB_SHAPE(state, suburb_data){
     state.selected_suburb_shape = suburb_data.geo_data
@@ -74,6 +81,18 @@ export const getters = {
       })
       : []
   },
+  active_section(state) {
+    let cs = state.current_section
+    if (cs["intro"])
+      return 0
+    else if (cs["search"])
+      return 1
+    else if (cs["map"])
+      return 2
+    else
+      return "wacha"
+  },
+
 }
 
 export const actions = {
@@ -86,9 +105,11 @@ export const actions = {
       })
     })
   },
-  GET_SUBURB({ commit }, sub_id) {
+  GET_SUBURB({ commit }, [sub_id, is_geo=true]) {
     return new Promise (resolve => {
       this.$axios.get(`/geo/suburb/${sub_id}/`).then(({data})=>{
+        if (!is_geo)
+          commit("SET_SELECTED_SUBURB", data)
         commit("SET_SUBURB_SHAPE", data)
         return(resolve(data))
       })
@@ -103,4 +124,11 @@ export const actions = {
       })
     })
   },
+  CHANGE_SECTION({commit}, data){
+    commit("SET_SECTION", data)
+  },  
+  CHANGE_SUBURB_FOUND({commit, dispatch}, sub_id){
+    commit("SET_SUBURB_ID", sub_id)
+    dispatch("GET_SUBURB", [sub_id, false])
+  },  
 }

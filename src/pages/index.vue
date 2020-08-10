@@ -1,12 +1,14 @@
 <script>
 import AutoComplete from "~/components/common/AutoComplete";
 import MapCDMX from "~/components/map/MapCDMX";
+import ppMixin from "~/mixins/ppMixin";
 import { mapState, mapActions } from "vuex";
 
 export default {
   layout: 'reports',
   name: 'MappingHolder',
   components: { AutoComplete, MapCDMX },
+  mixins: [ppMixin],
   data(){
     return {
       informer_type: '',
@@ -30,13 +32,28 @@ export default {
       suburbs: state => state.reports.suburbs,
       townhalls: state => state.reports.townhalls,
       suburb_types: state => state.reports.suburb_types,
+      selected_suburb: state => state.reports.selected_suburb,
+      suburb_id: state => state.reports.suburb_id,
     }),
     _suburbs_arr(){
       var insts = this.institutions.filter(ins=>ins.relevance==1)
-      console.log(insts.push({'id': 0, 'public_name':'Otra'}))
       return insts
     },
-
+    found_suburb(){
+      try{
+        let manual = this.selected_suburb.final_projects[0].manual_capture
+        return manual ? JSON.parse(manual) : {}        
+      }
+      catch(err){
+        return {}
+      }
+    },
+    fast_suburb(){
+      if (this.suburb_id)
+        return this.suburbs.find(sub=>sub.id==this.suburb_id)
+      else
+        return null
+    }
   },
   watch:{
     suburbs(subs){
@@ -45,7 +62,6 @@ export default {
       this.townhalls.map(th=>{
         th.name_upper= th.name.toUpperCase()
       })
-      console.log(Date.now())
       let last_th = undefined
       let last_st = undefined
       let last_th_id = 0
@@ -63,7 +79,6 @@ export default {
         sub.st_obj = last_st
         return sub
       })
-      console.log(Date.now())
       this.suburbs_arr = builded_data
 
     }
@@ -85,13 +100,6 @@ export default {
       this.$vuetify.goTo('#save_form', 
         {duration: 400, offset: 30, easing:'easeInOutCubic'})
     },
-    clickAdd(){
-      console.log(this.$ga)
-      this.$ga.event({
-        eventCategory: 'click',
-        eventAction: 'Open',
-      })
-    },
   },  
 }
 </script>
@@ -99,6 +107,7 @@ export default {
 <template>
   <div style="width: 100%">
     <v-img 
+      v-if="true"
       style="max-height: 450px;"
       dark 
       src="/background-7.png"
@@ -108,6 +117,7 @@ export default {
       :class="{'py-4': $breakpoint.is.xs,
         'py-10': $breakpoint.is.smAndUp}"
     >
+      <span id="wacha" v-intersect="propIntersect" section="intro"></span>
       <v-row 
         align="end"
         class="pa-2 fill-height">
@@ -118,6 +128,8 @@ export default {
           class="font-weight-bold"
         >
           <span
+            
+            
             class="blue-back  px-2 primary--text"
             :class="{'headline': $breakpoint.is.xs,
             'display-1': $breakpoint.is.smAndUp}"
@@ -136,10 +148,15 @@ export default {
         </v-col>
       </v-row>
     </v-img>
-    <v-card height="320" flat color="primary lighten-4" tile>
-      <v-row justify="center" align="center" class="fill-height">
-        <v-col align="center" justify="center" cols="5">
-          <v-icon x-large color="accent darken-1">fa-search-location</v-icon>
+    <v-card min-height="320" flat color="primary lighten-4" tile id="search">
+      <v-row justify="center" align="center" class="fill-height" no-gutters>
+        <v-col align="center" justify="center" cols="12" sm="8" md="6" class="px-2">
+          <v-icon
+            x-large
+            color="accent darken-1"
+            v-intersect="propIntersect"
+            section="search"
+          >fa-search-location</v-icon>
           <br>
           <div class="text-h5 mt-3">
             Busca tu colonia y entérate del histórico del presupuesto participativo
@@ -161,22 +178,29 @@ export default {
               style="max-width: 400px;"
             />
             <div></div>
-          </v-skeleton-loader>          
-          <v-select
-            v-if="false"
-            :items="['Iztapaluca', 'Array']"
-            v-model="suburb"
-            label="Escribe tu colonia"
-          >
-            <template v-slot:prepend class="mt-0">
-              <v-icon large>fa-search-location</v-icon>
-              
-            </template>
-          </v-select>
+          </v-skeleton-loader>
+          <v-card v-if="fast_suburb" class="mb-5">
+            <v-card-title primary-title>
+              <span class="mr-2 text-uppercase">{{fast_suburb.st_obj.name}}</span>
+              {{fast_suburb.name}}<v-spacer></v-spacer>
+              {{fast_suburb.townhall_obj.name}}
+            </v-card-title>
+            <v-card-text class="text-left">
+              <div>2018</div>
+              Nombre del proyecto: <br>
+              <span class="text-subtitle-1 black--text">{{found_suburb.description_cp}}</span>
+              <br>
+              Presupuesto: {{found_suburb.approved}}
+              <br>
+              Ejecutado: {{found_suburb.executed}}
+              <br>
+              Progreso de la obra: {{found_suburb.progress * 100 }}%
+            </v-card-text>
+          </v-card>
         </v-col>
       </v-row>
     </v-card>
-    <MapCDMX v-if="show_map"/>
+    <MapCDMX v-if="show_map" id="map"/>
     <v-card v-if="false">
       <v-row justify="center" align="center" class="fill-height" v-if="false">
         <v-col align="center" justify="center" cols="12">
@@ -190,6 +214,9 @@ export default {
           ></iframe>
         </v-col>   
       </v-row>
+    </v-card>
+    <v-card id="viz">
+      Hola soy la visualización
     </v-card>
   </div>
 </template>

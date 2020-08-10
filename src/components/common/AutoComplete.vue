@@ -1,5 +1,7 @@
 <script>
 
+import { mapActions } from "vuex";
+
 export default {
   name: 'AutoComplete',
   props:{
@@ -37,7 +39,7 @@ export default {
     },
   },
   data(){
-    return {      
+    return {
       dont_match: undefined,
       response_string: undefined,
       response_text: undefined,      
@@ -50,6 +52,9 @@ export default {
     }
   },
   methods: {
+    ...mapActions({
+      changeSuburbFound: 'reports/CHANGE_SUBURB_FOUND'
+    }),
     changeText(str){
       console.log("text",str)
       this.response_text=str
@@ -64,7 +69,6 @@ export default {
       if(str ? str.length < 3 : true){
         return
       }
-
       str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
       //var first_number = str.match(/\d+/)
       var words = str.split(/\d+|\s/)
@@ -139,10 +143,11 @@ export default {
         this.special_items ? itm.id : itm)
     },
     emitData(){
-      var new_value=this.response || this.response_string
+      var new_value=this.response
       if (this.value != new_value){
         this.value = new_value
-        this.$emit('input_change', {'model': this.model, 'value': new_value})
+        this.changeSuburbFound(new_value)
+        //this.$emit('input_change', {'model': this.model, 'value': new_value})
       }
     }
   },

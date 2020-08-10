@@ -16,7 +16,7 @@ export default {
 
 <template>
   <v-app id="app">
-    <main-nav></main-nav>
+    <main-nav v-if="true"></main-nav>
     <v-main>
       <v-container pa-0 fluid >
         
@@ -24,6 +24,6 @@ export default {
         
       </v-container>
     </v-main>
-    <footer2/>
+    <footer2 v-if="false"/>
   </v-app>
 </template>

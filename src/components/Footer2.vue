@@ -1,3 +1,24 @@
+<script>
+
+export default {
+  data() {
+    return {
+      networks: [
+        {'url':'https://www.facebook.com/ollinorg','icon':'fab fa-facebook'},
+        {'url':'https://twitter.com/ollinorg','icon':'fab fa-twitter'},
+        {'url':'http://ollinac.org/','icon':'fa-globe'},
+      ],
+      pages:["https://nosotrxs.org/", "https://fundar.org.mx/", "https://juntoscontraelcancer.mx/", "https://fibrosisquistica.org.mx/~h4u3f3d9/", "http://www.amlcc.org/", "https://www.dvvimss.org.mx/"]
+    }
+  },
+  methods: {
+    getImgUrl(n) {
+      var images = require.context('~/static/', false, /\.png$/)
+      return images(`./desabasto-${n}.png`)
+    }
+  },
+}
+</script>
 <template>
   <v-footer
     padless
@@ -11,7 +32,7 @@
       style="border-top: 3px purple solid;"
     >
       <v-row align="top">
-        <v-col cols="8">
+        <v-col cols="12" sm="8">
 
           <v-card-title class="subtitle-1 font-weight-bold py-1">
             Datos cívicos a tu alcance. Historia del presupuesto participativo
@@ -31,59 +52,29 @@
             aquella elaborada por nuestra organización.</span>
           </v-card-text>
         </v-col>
-        <v-col cols="4" class="text-center">
+        <v-col md="4" class="text-center">
           <a 
-            href="https://nosotrxs.org/"
+            href="https://ollinac.org/"
             class="font-weight-bold text-h5 black--text"
             target="_blank"
           >
             <strong>Ollín, A.C.</strong> — {{ new Date().getFullYear() }}
           </a>
-        <v-col>
-          <v-btn
-            v-for="net in networks"
-            :key="net.icon"
-            class="mx-4 primary--text"
-            icon
-            large
-            :href="net.url"
-            target="_blank"
-          >
-            <v-icon size="24px" large>{{ net.icon }}</v-icon>
-          </v-btn>
-        </v-col>
-
-
-
+          <v-col>
+            <v-btn
+              v-for="net in networks"
+              :key="net.icon"
+              class="mx-4 primary--text"
+              icon
+              large
+              :href="net.url"
+              target="_blank"
+            >
+              <v-icon size="24px" large>{{ net.icon }}</v-icon>
+            </v-btn>
+          </v-col>
         </v-col>
       </v-row>
     </v-card>
   </v-footer>
 </template>
-<script>
-
-export default {
-  data() {
-    return {
-      networks: [
-        {'url':'https://www.facebook.com/ollinorg','icon':'fab fa-facebook'},
-        {'url':'https://twitter.com/ollinorg','icon':'fab fa-twitter'},
-        {'url':'http://ollinac.org/','icon':'fa-globe'},
-      ],
-      pages:["https://nosotrxs.org/", "https://fundar.org.mx/", "https://juntoscontraelcancer.mx/", "https://fibrosisquistica.org.mx/~h4u3f3d9/", "http://www.amlcc.org/", "https://www.dvvimss.org.mx/"]
-    }
-  },
-  methods: {
-    getImgUrl(n) {
-      var images = require.context('~/static/', false, /\.png$/)
-      return images(`./desabasto-${n}.png`)
-    }      
-  },
-  created(){
-    console.log("creando FOOTER")
-  }
-}
-</script>
-<style lang="scss">
-
-</style>
