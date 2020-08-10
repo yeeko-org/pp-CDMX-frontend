@@ -24,6 +24,6 @@ export default {
         
       </v-container>
     </v-main>
-    <footer2 v-if="false"/>
+    <footer2 v-if="true"/>
   </v-app>
 </template>

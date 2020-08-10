@@ -18,6 +18,11 @@ export default {
       show_map: false,
       suburbs_arr: undefined,
       complete_arr: undefined,
+      budgets: [
+        { name: 'Abobado', key_name: 'approved'},
+        { name: 'Modificado', key_name: 'modified'},
+        { name: 'Ejercido', key_name: 'executed'},
+      ],
       //background: require("@/assets/background7.jpg"),
       //mapeo: require("@/assets/mapeo.png"),
       reports:[
@@ -46,6 +51,22 @@ export default {
       }
       catch(err){
         return {}
+      }
+    },
+    final_project(){
+      try{
+        return this.selected_suburb.final_projects[0]
+      }
+      catch(err){
+        return {}
+      }
+    },
+    all_projects(){
+      try{
+        return this.selected_suburb.final_projects[0].projects
+      }
+      catch(err){
+        return []
       }
     },
     fast_suburb(){
@@ -148,7 +169,14 @@ export default {
         </v-col>
       </v-row>
     </v-img>
-    <v-card min-height="320" flat color="primary lighten-4" tile id="search">
+    <v-card
+      id="search"
+      flat 
+      tile 
+      min-height="320"
+      color="primary lighten-4"
+      class="py-4"
+    >
       <v-row justify="center" align="center" class="fill-height" no-gutters>
         <v-col align="center" justify="center" cols="12" sm="8" md="6" class="px-2">
           <v-icon
@@ -186,16 +214,77 @@ export default {
               {{fast_suburb.townhall_obj.name}}
             </v-card-title>
             <v-card-text class="text-left">
-              <div>2018</div>
-              Nombre del proyecto: <br>
+              Nombre del proyecto:
+              <span 
+                class="float-right text-h6 font-weight-bold primary--text mt-n3"
+              >2018</span>
+               <br>
               <span class="text-subtitle-1 black--text">{{found_suburb.description_cp}}</span>
-              <br>
-              Presupuesto: {{found_suburb.approved}}
-              <br>
-              Ejecutado: {{found_suburb.executed}}
-              <br>
-              Progreso de la obra: {{found_suburb.progress * 100 }}%
+              <v-row>
+                <v-col cols="4" class="pt-6">
+                  Progreso de la obra: <br>
+                  <div class="body-1 black--text text-center mb-2">
+                    {{found_suburb.progress * 100 }}%
+                  </div>
+                  Anomalías:
+                  <v-chip dark color="primary lighten-2">Un solo proyecto</v-chip>
+                </v-col>
+                <v-col cols="8">
+                  <v-simple-table dense>
+                    <template v-slot:default>
+                      <thead>
+                        <tr>
+                          <th class="text-left">Presupuesto</th>
+                          <th class="text-right">Monto</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="budget in budgets" :key="budget.key_name">
+                          <td>{{ budget.name }}</td>
+                          <td class="text-right">{{ found_suburb[budget.key_name] }}</td>
+                        </tr>
+                      </tbody>
+                    </template>
+                  </v-simple-table>
+                </v-col>
+                <v-col cols="12">
+                <v-expansion-panels>
+                  <v-expansion-panel>
+                    <v-expansion-panel-header>
+                      {{final_project.total_votes}} votos para
+                       {{all_projects.length}} propuestas
+                     </v-expansion-panel-header>
+                    <v-expansion-panel-content>
+                      <v-simple-table dense>
+                        <template v-slot:default>
+                          <thead>
+                            <tr>
+                              <th class="text-left"></th>
+                              <th class="text-left">Nombre</th>
+                              <th class="text-right">Votos</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="proj in all_projects" :key="proj.id">
+                              <td>
+                                <v-icon color="yellow darken-2" v-if="proj.is_winer">
+                                  fa-trophy
+                                </v-icon>
+                              </td>
+                              <td>{{ proj.name_iecm }}</td>
+                              <td class="text-right">{{ proj.votes }}</td>
+                            </tr>
+                          </tbody>
+                        </template>
+                      </v-simple-table>
+                      
+                    </v-expansion-panel-content>
+                  </v-expansion-panel>
+                </v-expansion-panels>                  
+                </v-col>
+              </v-row>
             </v-card-text>
+
           </v-card>
         </v-col>
       </v-row>
