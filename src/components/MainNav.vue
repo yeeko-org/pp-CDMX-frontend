@@ -73,8 +73,8 @@ export default {
     >
       <router-link to="/">
         <v-img src="/logo.png"
-          :height="text_visible && $breakpoint.is.smAndUp ? 70 : 45"
-          :width="text_visible && $breakpoint.is.smAndUp ? 194 : 128"
+          :height="text_visible && $breakpoint.is.smAndUp ? 70 : 44"
+          :width="text_visible && $breakpoint.is.smAndUp ? 220 : 140"
         />
       </router-link>
     </v-toolbar-items>

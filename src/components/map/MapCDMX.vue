@@ -21,6 +21,7 @@ export default {
       posX:-200,
       posY:-200,*/
       loaded_data: false,
+      zoom_townhall: undefined,
       width: 640,
       height: 700,
       devicePixelRatio: true,
@@ -163,7 +164,7 @@ export default {
             .attr("id", "prov_tag")
             .attr("font-size", "1em")
             .style('fill', 'white')
-            .text("texto acá")
+            .text("")
             .attr('x', 6)
             .attr('y', `${prov_square[1]-4}`)
             //.attr('transform', `translate(0,0)`)
@@ -263,9 +264,28 @@ export default {
       class="px-1 py-3"
     >
       <v-card id="MapCard">
-        <v-card-title class="no-wrap" v-intersect="propIntersect" section="map">
-          Mapa Interactivo:
-        </v-card-title>
+        <div
+          v-intersect="propIntersect"
+          section="map"
+          class="no-wrap text-left pa-4" 
+        >
+          <span class="text-h5">Mapa Interactivo</span>
+          <v-icon class="ml-3 mb-3" large color="accent">
+            fa-map-marked-alt
+          </v-icon>
+          <v-select
+            :items="['Azcapotzalco','Álvaro Obregón']"
+            v-model="zoom_townhall"
+            label="Selecciona una Alcaldía"
+            class="float-right"
+            outlined
+            style="max-width: 300px;"
+          ></v-select>
+          <br>
+          <span class="grey--text">
+            Interactúa con el mapa y sus elementos
+          </span>
+        </div>
         <svg v-if="true"
           id="MapCDMX"
         ></svg>

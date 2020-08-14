@@ -1,13 +1,14 @@
 <script>
 import AutoComplete from "~/components/common/AutoComplete";
 import MapCDMX from "~/components/map/MapCDMX";
+import MainHeader from "~/components/home/MainHeader";
 import ppMixin from "~/mixins/ppMixin";
 import { mapState, mapActions } from "vuex";
 
 export default {
   layout: 'reports',
   name: 'MappingHolder',
-  components: { AutoComplete, MapCDMX },
+  components: { AutoComplete, MapCDMX, MainHeader},
   mixins: [ppMixin],
   data(){
     return {
@@ -19,7 +20,7 @@ export default {
       suburbs_arr: undefined,
       complete_arr: undefined,
       budgets: [
-        { name: 'Abobado', key_name: 'approved'},
+        { name: 'Aprobado', key_name: 'approved'},
         { name: 'Modificado', key_name: 'modified'},
         { name: 'Ejercido', key_name: 'executed'},
       ],
@@ -149,8 +150,6 @@ export default {
           class="font-weight-bold"
         >
           <span
-            
-            
             class="blue-back  px-2 primary--text"
             :class="{'headline': $breakpoint.is.xs,
             'display-1': $breakpoint.is.smAndUp}"
@@ -169,6 +168,7 @@ export default {
         </v-col>
       </v-row>
     </v-img>
+    <MainHeader />
     <v-card
       id="search"
       flat 
@@ -219,15 +219,22 @@ export default {
                 class="float-right text-h6 font-weight-bold primary--text mt-n3"
               >2018</span>
                <br>
-              <span class="text-subtitle-1 black--text">{{found_suburb.description_cp}}</span>
+              <span class="text-subtitle-1 black--text">
+                {{found_suburb.description_cp  || 
+                  (all_projects.length ? all_projects[0].name_iecm : 'No disponible')}}
+              </span>
               <v-row>
                 <v-col cols="4" class="pt-6">
                   Progreso de la obra: <br>
                   <div class="body-1 black--text text-center mb-2">
                     {{found_suburb.progress * 100 }}%
                   </div>
-                  Anomalías:
-                  <v-chip dark color="primary lighten-2">Un solo proyecto</v-chip>
+                  <template v-if="false">
+                    Anomalías:
+                    <v-chip dark color="primary lighten-2">
+                      Un solo proyecto
+                    </v-chip>
+                  </template>
                 </v-col>
                 <v-col cols="8">
                   <v-simple-table dense>
@@ -251,8 +258,9 @@ export default {
                 <v-expansion-panels>
                   <v-expansion-panel>
                     <v-expansion-panel-header>
-                      {{final_project.total_votes}} votos para
-                       {{all_projects.length}} propuestas
+                      {{all_projects.length}} propuestas 
+                      <span class="grey--text ml-3">({{final_project.total_votes}} votos en total)</span>
+                       
                      </v-expansion-panel-header>
                     <v-expansion-panel-content>
                       <v-simple-table dense>
@@ -260,7 +268,7 @@ export default {
                           <thead>
                             <tr>
                               <th class="text-left"></th>
-                              <th class="text-left">Nombre</th>
+                              <th class="text-left px-0">Nombre</th>
                               <th class="text-right">Votos</th>
                             </tr>
                           </thead>
@@ -271,7 +279,7 @@ export default {
                                   fa-trophy
                                 </v-icon>
                               </td>
-                              <td>{{ proj.name_iecm }}</td>
+                              <td class="px-0">{{ proj.name_iecm }}</td>
                               <td class="text-right">{{ proj.votes }}</td>
                             </tr>
                           </tbody>
@@ -304,8 +312,12 @@ export default {
         </v-col>   
       </v-row>
     </v-card>
-    <v-card id="viz">
-      Hola soy la visualización
+    <v-card id="viz" class="ma-2 px-4 text-center">
+        <v-icon class="mt-4" large>fa-chart-bar</v-icon> 
+      <v-card-text class="text-subtitle-1">
+        Visualización en Construcción. Proximamente disponible
+        <v-icon>fa-laptop-code</v-icon>
+      </v-card-text>
     </v-card>
   </div>
 </template>
