@@ -44,7 +44,7 @@ export default {
         aquella elaborada por nuestra organización.</span>
       </v-card-text>
     </v-col>
-    <v-col class="text-left" align="left">
+    <v-col class="text-left" align="left" cols="12" sm="auto">
       <a 
         href="https://ollinac.org/"
         class="text-h5 white--text"
@@ -53,8 +53,8 @@ export default {
         <strong>Ollin, A.C.</strong> — {{ new Date().getFullYear() }}
       </a>
     </v-col>
-      <v-spacer></v-spacer>
-    <v-col class="text-right">
+    <v-spacer v-if="$breakpoint.is.smAndUp"></v-spacer>
+    <v-col class="text-right" cols="12" sm="auto">
       <v-btn
         v-for="net in networks"
         :key="net.icon"

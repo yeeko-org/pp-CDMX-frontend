@@ -1,4 +1,5 @@
 import { mapMutations, mapActions } from "vuex";
+import * as d3 from 'd3';
 
 var ppMixin = {
   data(){
@@ -20,6 +21,12 @@ var ppMixin = {
       catch(err){
         console.log(err)
       }
+    },
+    format_perc(v, dec=1){
+      return (!Number.isNaN(v)) ? d3.format(`.${dec}f`)(v) : '-'
+    },    
+    format_thous(v, dec=1){
+      return (!Number.isNaN(v)) ? d3.format(',')(v) : '-'
     },
   }
 }

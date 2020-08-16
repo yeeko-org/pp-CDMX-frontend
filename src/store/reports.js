@@ -1,11 +1,13 @@
+import * as d3 from 'd3';
+
 export const state = () => ({
   suburbs: undefined,
   townhalls: undefined,
   suburb_types: undefined,
   current_projects: undefined,
   selected_suburb: undefined,
+  over_suburb: undefined,
   selected_suburb_shape: undefined,
-  data_builded: false,
   suburb_id: undefined,
   current_section: {},
 })
@@ -13,7 +15,8 @@ export const state = () => ({
 export const mutations = {
   SET_CATS(state, data){
     state.suburbs = data.suburb
-    state.townhalls = data.townhall
+    state.townhalls = data.townhall.sort((x, y)=>
+        d3.descending(x.name, y.name))
     state.suburb_types = data.suburb_type
   },
   SET_FINAL_PROJECTS(state, reports){
@@ -29,11 +32,12 @@ export const mutations = {
       }
       return sub
     })
-    state.data_builded = true
   },
-  SET_SELECTED_SUBURB(state, suburb_data){
-    state.selected_suburb = suburb_data
-    console.log(state.selected_suburb)
+  SET_SELECTED_SUBURB(state, [suburb_data, is_geo=false]){
+    if (is_geo)
+      state.over_suburb = suburb_data
+    else
+      state.selected_suburb = suburb_data
   },
   SET_SUBURB_ID(state, sub_id){
     state.suburb_id = sub_id
@@ -107,9 +111,9 @@ export const actions = {
   },
   GET_SUBURB({ commit }, [sub_id, is_geo=true]) {
     return new Promise (resolve => {
+      commit("SET_SUBURB_SHAPE", {})
       this.$axios.get(`/geo/suburb/${sub_id}/`).then(({data})=>{
-        if (!is_geo)
-          commit("SET_SELECTED_SUBURB", data)
+        commit("SET_SELECTED_SUBURB", [data, is_geo])
         commit("SET_SUBURB_SHAPE", data)
         return(resolve(data))
       })

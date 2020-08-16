@@ -9,7 +9,7 @@
     </h2>
       <v-divider class="mt-5 mb-4 mx-auto"></v-divider>
       <p class="text-subtitle-1 font-weight-light mx-auto px-3 text-justify">
-        A través de esta página, Ollin, Jóvenes en Movimiento busca ofrecerte
+        A través de esta página, Ollin busca ofrecerte
         una herramienta de <b>transparencia</b>, para que conozcas los datos más
         relevantes de los proyectos ganadores de la consulta del Presupuesto
         Participativo en la Ciudad de México, a lo largo del tiempo. <br>

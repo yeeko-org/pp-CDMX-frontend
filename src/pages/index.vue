@@ -134,16 +134,21 @@ export default {
       dark 
       src="/background-7.png"
       min-height="300"
-      max-height="450"
+      max-height="420"
       id="header"
       :class="{'py-4': $breakpoint.is.xs,
         'py-10': $breakpoint.is.smAndUp}"
     >
-      <span id="wacha" v-intersect="propIntersect" section="intro"></span>
+      <span 
+        id="wacha"
+        v-intersect="propIntersect"
+        section="intro"
+      ></span>
       <v-row 
         align="end"
         class="pa-2 fill-height">
         <v-col 
+          v-if="false"
           cols="12"
           align="center"
           justify="end"
