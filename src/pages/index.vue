@@ -37,6 +37,7 @@ export default {
     ...mapState({
       suburbs: state => state.reports.suburbs,
       townhalls: state => state.reports.townhalls,
+      categories: state => state.reports.categories,
       suburb_types: state => state.reports.suburb_types,
       selected_suburb: state => state.reports.selected_suburb,
       suburb_id: state => state.reports.suburb_id,
@@ -52,6 +53,21 @@ export default {
       }
       catch(err){
         return {}
+      }
+    },
+    winer_project(){
+      return this.all_projects.length 
+        ? this.all_projects[0]
+        : {name_iecm: 'No disponible'}
+    },
+    category_winer(){
+      if (!this.winer_project) return null
+      try{
+        return this.categories.find(cat=>
+          cat.id == this.winer_project.category_iecm)
+      }
+      catch(err){
+        return null
       }
     },
     final_project(){
@@ -107,7 +123,6 @@ export default {
   },
   created(){
     this.fetchCatalogs().then(cats=>{
-      console.log("se cargó el catálogo")
       this.show_map = true
     })
   },
@@ -223,11 +238,18 @@ export default {
               <span 
                 class="float-right text-h6 font-weight-bold primary--text mt-n3"
               >2018</span>
-               <br>
+              <br>
               <span class="text-subtitle-1 black--text">
-                {{found_suburb.description_cp  || 
-                  (all_projects.length ? all_projects[0].name_iecm : 'No disponible')}}
+                {{found_suburb.description_cp  || winer_project.name_iecm}}
               </span>
+              <v-chip 
+                v-if="category_winer"
+                dark
+                :color="category_winer.color"
+              >
+                <v-icon class="mr-2" small>{{category_winer.icon}}</v-icon>
+                {{category_winer.name}}
+              </v-chip>
               <v-row>
                 <v-col cols="4" class="pt-6">
                   Progreso de la obra: <br>

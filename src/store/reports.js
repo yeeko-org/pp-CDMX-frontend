@@ -4,6 +4,7 @@ export const state = () => ({
   suburbs: undefined,
   townhalls: undefined,
   suburb_types: undefined,
+  categories: undefined,
   current_projects: undefined,
   selected_suburb: undefined,
   over_suburb: undefined,
@@ -18,6 +19,10 @@ export const mutations = {
     state.townhalls = data.townhall.sort((x, y)=>
         d3.descending(x.name, y.name))
     state.suburb_types = data.suburb_type
+    state.categories = data.categories.map((cat,idx)=>{
+      cat.color=d3.schemeDark2[idx]
+      return cat
+    })
   },
   SET_FINAL_PROJECTS(state, reports){
     state.current_projects = reports;

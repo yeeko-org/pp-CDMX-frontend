@@ -106,7 +106,7 @@ export default {
     },
     scale_participation(val){
       return d3.scaleSqrt()
-        .domain([0,.6])(val)      
+        .domain([0,.4])(val)      
     },
     scale_pob(val){
       return d3.scaleSqrt()
