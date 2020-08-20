@@ -178,6 +178,8 @@ export default {
 
       function clicked(d) {
         if (d){
+          d3.select('.selected')
+            .classed('selected', false)
           vm.zoom_townhall = parseInt(d.properties.municipio)
           //svg.selectAll(".selected")
             //.classed('selected', false)
@@ -375,7 +377,7 @@ export default {
             label="Selecciona una Alcaldía"
             :class="{'float-right': $breakpoint.is.smAndUp}"
             item-text="name"
-            item-value="id"
+            item-value="cve_alc"
             outlined
             style="max-width: 300px;"
             @change="zoomFromSelect"
