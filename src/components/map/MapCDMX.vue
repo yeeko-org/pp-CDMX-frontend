@@ -118,12 +118,19 @@ export default {
     },
     zoomFromSelect(value){
       console.log(value)
-      let selec = d3.select(`#th_${value}`)
-        .dispatch("click")
-      console.log(selec)
+      if (value){      
+        let selec = d3.select(`#th_${value}`)
+          .dispatch("click")
+      }
+      else{
+        let selec = d3.select(`.circle_back`)
+          .dispatch("click")
+      }
+      //console.log(selec)
       //document.getElementById('diagnosis').click();
     },
     build_map(){
+      let that = {}
       var is_small = this.$breakpoint.is.smAndDown
       var vm = this
 
@@ -156,6 +163,7 @@ export default {
       
       var divisor = 1
 
+
       const g = svg.append("g");
 
       var townhalls = g
@@ -175,6 +183,29 @@ export default {
           .on("mouseout", ()=>{
             prov_text.text(null)
           })
+
+      g.append('circle')
+          .attr("fill", 'transparent')
+          .attr("r", 1)
+          .classed("circle_back", true)
+          .on("click", back_cdmx)
+
+
+
+
+      function back_cdmx() {
+        d3.select('.selected')
+          .classed('selected', false)
+        d3.event.stopPropagation();
+        svg.call(
+          zoom.transform,
+          d3.zoomIdentity
+            .translate(vm.width / 2, vm.height / 2)
+            .scale(-vm.initial_scale)
+            .translate(...fixedProjection(vm.initial_center))
+            .scale(-1)
+        );
+      }
 
       function clicked(d) {
         if (d){
@@ -222,7 +253,7 @@ export default {
       var click_on_sub_sel = undefined
 
       var suburb_circles = svg.append("g")
-          .selectAll('circle')
+          .selectAll('.out_circle')
           .data(vm.suburbs_geo)
           .join("circle")
           .classed("out_circle", true)
@@ -343,7 +374,8 @@ export default {
 
           })
 
-
+      //that.back_cdmx = back_cdmx
+      //return that
 
     },
   },
@@ -379,6 +411,7 @@ export default {
             item-text="name"
             item-value="cve_alc"
             outlined
+            clearable
             style="max-width: 300px;"
             @change="zoomFromSelect"
           ></v-select>
