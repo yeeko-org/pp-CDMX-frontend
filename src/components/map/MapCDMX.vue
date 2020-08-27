@@ -210,8 +210,8 @@ export default {
 
       function click_in_th(d) {
         //svg.call(zoom.scale(2) )
-        zoom.scaleBy(svg, 1.2)
-        return
+        //zoom.scaleBy(svg, 1.2)
+        //return
         if (d){
           d3.select('.selected')
             .classed('selected', false)
