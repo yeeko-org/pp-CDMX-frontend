@@ -2,6 +2,7 @@
 import { mapState, mapActions, mapGetters } from "vuex";
 //import mixinLegend from "./mixinLegend";
 import ppMixin from "~/mixins/ppMixin";
+import mixinLegend from "./mixinLegend";
 
 import * as d3 from 'd3';
 import * as topojson from 'topojson';
@@ -11,7 +12,7 @@ export default {
   name: 'MapCDMX',
   components: {
   },
-  mixins: [ppMixin],
+  mixins: [ppMixin, mixinLegend],
   data(){
     return{
       posX:200,
@@ -71,7 +72,7 @@ export default {
         return !!this.sub_sel_data
       },
       set(){
-        console.log("de dónde viene?")
+        //console.log("de dónde viene?")
         this.sub_sel_data = undefined
       }
     },
@@ -106,7 +107,7 @@ export default {
     },
     scale_participation(val){
       return d3.scaleSqrt()
-        .domain([0,.4])(val)      
+        .domain([0,.3])(val)      
     },
     scale_pob(val){
       return d3.scaleSqrt()
@@ -178,10 +179,13 @@ export default {
           .attr("stroke-linecap", "round")
           .attr("stroke-linejoin", "round")
           .classed("clicklable", true)
-          .on("click", clicked)
+          .on("click", click_in_th)
           .on("mouseover", mousevent)
           .on("mouseout", ()=>{
-            prov_text.text(null)
+            prov_text
+              .text(null)
+            rect_container
+              .attr('fill-opacity', 0)
           })
 
       g.append('circle')
@@ -189,9 +193,6 @@ export default {
           .attr("r", 1)
           .classed("circle_back", true)
           .on("click", back_cdmx)
-
-
-
 
       function back_cdmx() {
         d3.select('.selected')
@@ -207,7 +208,10 @@ export default {
         );
       }
 
-      function clicked(d) {
+      function click_in_th(d) {
+        //svg.call(zoom.scale(2) )
+        zoom.scaleBy(svg, 1.2)
+        return
         if (d){
           d3.select('.selected')
             .classed('selected', false)
@@ -237,6 +241,8 @@ export default {
       function mousevent(d){
         prov_text
           .text(d.properties.nomgeo)
+        rect_container
+          .attr('fill-opacity', 0.4)
       }
 
       const g_sub_sel = svg.append("g");
@@ -245,7 +251,7 @@ export default {
         .attr('opacity', 0.65)
         .on("mouseout", mouseOutSubPathSelected)
         .on("click", ()=> {
-          clicked()
+          click_in_th()
         })
 
       var request_canceled = undefined
@@ -286,13 +292,15 @@ export default {
         sub_sel_path
           .attr("fill", vm.sub_sel_color)
         if (click_on_sub_sel){
-          clicked(d, true)
+          click_in_th(d, true)
         }
         function onSuccessData(res){
           console.log("onSuccessData")
           const need_cancel = request_canceled == res.id
           request_canceled = undefined
           if (need_cancel) return
+          d3.selectAll('.selected_circle')
+            .classed('selected_circle', false)
           select_circle
             .classed('selected_circle', true)
           sub_sel_path
@@ -352,7 +360,7 @@ export default {
 
       let rect_container = g_container.append("rect")
           .attr("fill", "grey")
-          .attr("fill-opacity", 0.4)
+          .attr("fill-opacity", 0)
           .attr('height', d=> prov_square[1])
           .attr('width', d=> prov_square[0])
           
@@ -361,18 +369,75 @@ export default {
           .append("text")
           .attr("id", "prov_tag")
           .attr("font-size", "1em")
-          //.style('fill', 'white')
           .attr('x', 6)
           .attr('y', `${prov_square[1]-4}`)
-          //.attr('transform', `translate(0,0)`)
           .attr('opacity', 0.65)
-          .on("click", d=> {
-            //console.log(d)
-            //console.log(last_transform)
-            //last_transform.x+=1500
-            //last_transform.y+=1500
 
-          })
+
+      //width: 640,
+      //height: 700,
+      let width_legend = 200
+      let height_leyend = 52
+      let left_legend = 20
+
+      svg.append("rect")
+          .attr("fill", "white")
+          .attr("fill-opacity", .6)
+          .attr('height', d=> height_leyend)
+          .attr('width', d=> width_legend + 20)
+          .attr('transform', `translate(${vm.width - width_legend - left_legend - 10}, ${14})`)
+
+      vm.legend({
+        color: d3.scaleSequentialSqrt([0,.3], vm.scale_color),
+        title: "Nivel de Participación",
+        ticks: 7,
+        fontSize: is_small ? 14 : 9,
+        marginLeft: is_small ? 20 : vm.width - width_legend - left_legend,
+        marginTop: is_small ? 570 : 30,
+        height: is_small ? 615 : 65,
+        width: is_small ? 400 : vm.width - left_legend,
+      })
+
+
+      let width_legend_bub = 136
+      let legend_bubbles = [vm.width - width_legend_bub -left_legend , 65]
+      const leg_bub_container = svg.append("g")
+          .attr('transform', `translate(${legend_bubbles[0]}, ${76})`)
+          .attr("pointer-events", "none")
+
+      let rect_leg_bub = leg_bub_container.append("rect")
+          .attr("fill", "white")
+          .attr("fill-opacity", .6)
+          .attr('height', d=> legend_bubbles[1])
+          .attr('width', d=> width_legend_bub)
+          
+      leg_bub_container
+        .selectAll('.legend_bub_text')
+        //.data(["menos pobl.", "más pobl."])
+        .data(["Tamaño según población"])
+          .join("text")
+            .classed("legend_bub_text", true)
+            .attr("font-size", "0.7em")
+            .attr('x', (d, i)=> i ? width_legend_bub - 60 : 2)
+            .attr('y', 14)
+            .attr("font-weight", "bold")
+            .text(d=>d)
+          
+      let bubbles_examples = [8, 16, 24, 32]
+      let examples_containers = leg_bub_container
+        .selectAll('.legend_bubble')
+          .data(bubbles_examples)
+          .join("circle")
+            .classed("legend_bubble", true)
+            .attr('cx', (d, i)=> (20 * i) + (i ? (d * i/2.7) + 15 : 12))
+            .attr('cy', legend_bubbles[1]-22)
+            .attr('r', d=> d/2)
+            .attr('fill', 'transparent')
+            .attr('stroke', 'black')
+
+
+
+
 
       //that.back_cdmx = back_cdmx
       //return that
