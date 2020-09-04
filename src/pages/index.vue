@@ -4,6 +4,7 @@ import MapCDMX from "~/components/map/MapCDMX";
 import MainHeader from "~/components/home/MainHeader";
 import ppMixin from "~/mixins/ppMixin";
 import { mapState, mapActions } from "vuex";
+import * as d3 from 'd3';
 
 export default {
   layout: 'reports',
@@ -48,8 +49,19 @@ export default {
     },
     found_suburb(){
       try{
-        let manual = this.selected_suburb.final_projects[0].manual_capture
-        return manual ? JSON.parse(manual) : {}        
+        let real = this.selected_suburb.final_projects[0]
+        let manual = JSON.parse(real.manual_capture || "{}")
+        console.log(real)
+        let has_real = real.approved !== null
+        let progress = has_real ? real.progress : manual.progress
+        if (progress>2)
+          progress = progress / 100
+        return {
+          approved: has_real ? real.approved : manual.approved,
+          modified: has_real ? real.modified : manual.modified,
+          executed: has_real ? real.executed : manual.executed,
+          progress: progress
+        }
       }
       catch(err){
         return {}
@@ -136,6 +148,12 @@ export default {
     goToForm(offs=30){
       this.$vuetify.goTo('#save_form', 
         {duration: 400, offset: 30, easing:'easeInOutCubic'})
+    },
+    formatAmmount(val){
+      if (isNaN(val))
+        return "-"
+      else
+        return d3.format("($,.2f")(val)
     },
   },  
 }
@@ -275,7 +293,9 @@ export default {
                       <tbody>
                         <tr v-for="budget in budgets" :key="budget.key_name">
                           <td>{{ budget.name }}</td>
-                          <td class="text-right">{{ found_suburb[budget.key_name] }}</td>
+                          <td class="text-right">
+                            {{ formatAmmount(found_suburb[budget.key_name])}}
+                          </td>
                         </tr>
                       </tbody>
                     </template>
@@ -286,7 +306,9 @@ export default {
                   <v-expansion-panel>
                     <v-expansion-panel-header>
                       {{all_projects.length}} propuestas 
-                      <span class="grey--text ml-3">({{final_project.total_votes}} votos en total)</span>
+                      <span class="grey--text ml-3">
+                        ({{final_project.total_votes}} votos en total)
+                      </span>
                        
                      </v-expansion-panel-header>
                     <v-expansion-panel-content>

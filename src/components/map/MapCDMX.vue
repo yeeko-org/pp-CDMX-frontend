@@ -23,7 +23,6 @@ export default {
       sub_sel_id: true,
       sub_sel_data: undefined,
       width: 640,
-      height: 700,
       cancel_request: undefined,
       block_zoom: false,
       devicePixelRatio: true,
@@ -54,6 +53,9 @@ export default {
     },
     domain_votes(){
       return d3.extent(this.current_projects, d=> d.participation)
+    },
+    height(){
+      return this.$breakpoint.is.smAndDown ? 800 : 700
     },
     quantile(){
       //var all_data=this.current_projects.map(x=>x.participation)
@@ -382,7 +384,7 @@ export default {
 
       svg.append("rect")
           .attr("fill", "white")
-          .attr("fill-opacity", .6)
+          .attr("fill-opacity", is_small ? 0 : .6)
           .attr('height', d=> height_leyend)
           .attr('width', d=> width_legend + 20)
           .attr('transform', `translate(${vm.width - width_legend - left_legend - 10}, ${14})`)
@@ -392,15 +394,21 @@ export default {
         title: "Nivel de Participación",
         ticks: 7,
         fontSize: is_small ? 14 : 9,
+        //fontSize: 9,
         marginLeft: is_small ? 20 : vm.width - width_legend - left_legend,
-        marginTop: is_small ? 570 : 30,
-        height: is_small ? 615 : 65,
-        width: is_small ? 400 : vm.width - left_legend,
+        //marginLeft: vm.width - width_legend - left_legend,
+        //marginTop: is_small ? 570 : 30,
+        marginTop: 30,
+        //height: is_small ? 615 : 65,
+        height: 65,
+        //width: is_small ? 400 : vm.width - left_legend,
+        width: vm.width - left_legend,
       })
 
 
-      let width_legend_bub = 136
-      let legend_bubbles = [vm.width - width_legend_bub -left_legend , 65]
+      let width_legend_bub = is_small ? 136 : 136
+      let legend_bubbles = [vm.width - width_legend_bub -left_legend , 
+        is_small ? 90 : 65]
       const leg_bub_container = svg.append("g")
           .attr('transform', `translate(${legend_bubbles[0]}, ${76})`)
           .attr("pointer-events", "none")
@@ -411,15 +419,19 @@ export default {
           .attr('height', d=> legend_bubbles[1])
           .attr('width', d=> width_legend_bub)
           
+      let legends_sizes = is_small 
+        ? ["Tamaño según", "población"] 
+        : ["Tamaño según población"]
       leg_bub_container
         .selectAll('.legend_bub_text')
         //.data(["menos pobl.", "más pobl."])
-        .data(["Tamaño según población"])
+        .data(legends_sizes)
           .join("text")
             .classed("legend_bub_text", true)
-            .attr("font-size", "0.7em")
-            .attr('x', (d, i)=> i ? width_legend_bub - 60 : 2)
-            .attr('y', 14)
+            .attr("font-size", is_small ? "1em" : "0.7em")
+            //.attr('x', (d, i)=> i ? width_legend_bub - 60 : 2)
+            .attr('x', 2)
+            .attr('y', (d, i)=> (i * 20) + 20)
             .attr("font-weight", "bold")
             .text(d=>d)
           
