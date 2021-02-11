@@ -1,9 +1,10 @@
 <script>
 
+import { mapActions } from "vuex";
 import * as d3 from 'd3';
 
 export default {
-  name: 'ReportsLayout',
+  name: 'References',
   layout: 'diamonds',
   components: {  },  
   data () {
@@ -11,73 +12,84 @@ export default {
       width: 2200,
       height: 1700,
       radius: 12,
+      base_url: 'https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/',
       url_image: '',
-      circles: [
-        {
-          "x": 497,
-          "y": 594
-        },
-        {
-          "x": 889,
-          "y": 597
-        },
-        {
-          "x": 1317,
-          "y": 598
-        },
-        {
-          "x": 1462,
-          "y": 590
-        },
-        {
-          "x": 1650,
-          "y": 594
-        },
-        {
-          "x": 1832,
-          "y": 594
-        },
-        {
-          "x": 2010,
-          "y": 596
-        }
-      ],
-      circles2: [
-        { "x": 111, "y": 448 },
-        { "x": 2118, "y": 1390 }
-      ],
+      current_image: undefined,
+      divisors: [],
+      references: [],
+      show_svg: false,
+      loading: true
     }
   },
   computed:{
   },
   mounted(){
-    this.drawImage()
+    this.getNext().then(res=>{
+      console.log(res)
+      this.loading = false
+      this.show_svg = true
+      this.resetReferences()
+      this.current_image = res
+      this.drawImage()
+    })    
   },
   watch:{
     url_image(after, before){
-      console.log("hola mundo")
       d3.select("#back_image")
-        .attr('xlink:href', after)
+        .attr('xlink:href', `${base_url}${after}`)
     }
   },
   methods:{
+    ...mapActions({
+      getNext : 'reports/GET_NEXT',
+      postNext : 'reports/POST_NEXT',
+    }),
+    saveNext(){
+      let new_data = {
+        id: this.current_image.id,
+        references: this.references,
+      }
+      this.loading = true
+      if (this.current_image.divisors)
+        new_data.divisors = this.divisors
+      this.postNext(new_data).then(res=>{
+      this.$vuetify.goTo(0,
+        {duration: 400, offset: 20, easing:'easeInOutCubic'})
+
+        this.loading = false
+        d3.select("#back_image")
+          .attr('xlink:href', `${this.base_url}${res.url}`)
+        this.resetReferences()
+        this.drawImage()
+        this.current_image = res
+      })
+    },
+    resetReferences(){
+      this.divisors = [
+        { "x": 497, "y": 594 },
+        { "x": 889, "y": 597 },
+        { "x": 1317, "y": 598 },
+        { "x": 1462, "y": 590 },
+        { "x": 1650, "y": 594 },
+        { "x": 1832, "y": 594 },
+        { "x": 2010, "y": 596 }
+      ]
+      this.references = [
+        { "x": 111, "y": 448 },
+        { "x": 2118, "y": 1390 }
+      ]
+    },
     drawImage(){
       let vm = this
-      let circles = vm.circles
-      let circles2 = vm.circles2
-
-      /*let circles = d3.range(1).map(i => 
-          i ? {
-            x: ((1/10) *i) * (vm.width - vm.radius * 2) + vm.radius,
-            y: ((1/10)* i) * (vm.height - vm.radius * 2) + vm.radius,
-          } : {x:20, y: 40});*/
-
+      let circles = vm.divisors
+      let circles2 = vm.references
       var svg = d3.select("#imageback")
         //.attr("width", vm.width / 2)
         //.attr("height", vm.height / 2)
         .attr("viewBox", [0, 0, vm.width, vm.height])
+      console.log(svg)
       
-      let url = "https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/2014/PP-2014-AO_0001.png"
+      let url = `${vm.base_url}${vm.current_image.url}` // "https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/2014/PP-2014-AO_0001.png"
       svg.append('image')
         .attr('xlink:href', url)
         .attr('width', vm.width)
@@ -90,7 +102,6 @@ export default {
           d3.select(this).raise().attr("stroke", "black");
         }
         function dragged(event, d) {
-          console.log(d)
           let circle = cir_num  == 1 ? circles[d] : circles2[d]
           circle.x = d3.event.x
           circle.y = d3.event.y
@@ -108,6 +119,7 @@ export default {
             .on("end", dragended);
       }
 
+      if (vm.current_image.divisors){
       svg.selectAll("diamonds")
         .data(circles)
         .join("path")
@@ -116,16 +128,16 @@ export default {
           .attr("fill", (d, i) => d3.schemeCategory10[i+2])
           .attr("transform", d => `translate(${d.x - 20}, ${d.y - 40})`)
           .call(drag(1));
+      }
 
-      svg.selectAll("diamonds2")
-        .data(vm.circles2)
-        .join("path")
-          .attr("d", "M 40 0 80 80 40 160 0 80 Z")
-          .style("stroke-width", 1)
-          .attr("fill", (d, i) => d3.schemeCategory10[i])
-          .attr("transform", d => `translate(${d.x - 40}, ${d.y - 80})`)
-          .call(drag(2));
-
+        svg.selectAll("diamonds2")
+          .data(circles2)
+          .join("path")
+            .attr("d", "M 40 0 80 80 40 160 0 80 Z")
+            .style("stroke-width", 1)
+            .attr("fill", (d, i) => d3.schemeCategory10[i])
+            .attr("transform", d => `translate(${d.x - 40}, ${d.y - 80})`)
+            .call(drag(2));
 
     },
   },
@@ -135,12 +147,12 @@ export default {
 
 <template>
   <v-card>
-    <v-card-title primary-title>
+    <v-card-title primary-title class="pb-0">
       Ubica las referencias arrastrando los rombos
     </v-card-title>
     <v-card-text>
       <v-row>
-        <v-col cols="12">
+        <v-col cols="12" v-if="false">
           Ubica los rombos grandes al comienzo y al final de los datos
           <br>Los rombos pequeños, si hay, en la división entre las columnas
         </v-col>
@@ -155,18 +167,20 @@ export default {
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn color="success">Guardar referencias</v-btn>
+      <v-btn color="success" :loading="loading" @click="saveNext">Guardar referencias</v-btn>
     </v-card-actions>
-    chicos: {{circles}}
-    <br>
-    grandes: {{circles2}}
-    <v-text-field
-      name="url"
-      style="max-width: 800px"
-      outlined
-      v-model="url_image"
-      label="Imagen forzada"
-      id="id"
-    ></v-text-field>
+    <template v-if="false">
+      chicos: {{divisors}}
+      <br>
+      grandes: {{references}}
+      <v-text-field
+        name="url"
+        style="max-width: 800px"
+        outlined
+        v-model="url_image"
+        label="Imagen forzada"
+        id="id"
+      ></v-text-field>
+    </template>
   </v-card>
 </template>

@@ -2,7 +2,7 @@
 import MainNav from '~/components/MainNav.vue'
 import Footer2 from '~/components/Footer2.vue'
 export default {
-  name: 'ReportsLayout',
+  name: 'DefaultLayout',
   components: {
     MainNav,
     Footer2,

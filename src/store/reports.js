@@ -133,6 +133,21 @@ export const actions = {
       })
     })
   },
+  GET_NEXT({commit}){
+    return new Promise (resolve => {
+      this.$axios.get('/public_account/next/').then(({data})=>{
+        return resolve(data)
+      })
+    })
+  },
+  POST_NEXT({commit}, curr_data){
+    return new Promise (resolve => {
+      this.$axios.post('/public_account/next/', curr_data).then(({data})=>{
+        //commit("SET_FINAL_PROJECTS", data)
+        return resolve(data)
+      })
+    })
+  },
   CHANGE_SECTION({commit}, data){
     commit("SET_SECTION", data)
   },  
