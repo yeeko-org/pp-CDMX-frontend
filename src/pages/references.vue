@@ -36,7 +36,7 @@ export default {
   watch:{
     url_image(after, before){
       d3.select("#back_image")
-        .attr('xlink:href', `${base_url}${after}`)
+        .attr('xlink:href', after) //`${base_url}${after}`)
     }
   },
   methods:{
@@ -58,7 +58,7 @@ export default {
 
         this.loading = false
         d3.select("#back_image")
-          .attr('xlink:href', `${this.base_url}${res.url}`)
+          .attr('xlink:href',  res.url)//`${this.base_url}${res.url}`)
         this.resetReferences()
         this.drawImage()
         this.current_image = res
@@ -89,7 +89,8 @@ export default {
         .attr("viewBox", [0, 0, vm.width, vm.height])
       console.log(svg)
       
-      let url = `${vm.base_url}${vm.current_image.url}` // "https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/2014/PP-2014-AO_0001.png"
+      //let url = `${vm.base_url}${vm.current_image.url}` // "https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/2014/PP-2014-AO_0001.png"
+      let url = vm.current_image.url
       svg.append('image')
         .attr('xlink:href', url)
         .attr('width', vm.width)

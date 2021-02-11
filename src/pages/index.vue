@@ -7,7 +7,6 @@ import { mapState, mapActions } from "vuex";
 import * as d3 from 'd3';
 
 export default {
-  layout: 'reports',
   name: 'MappingHolder',
   components: { AutoComplete, MapCDMX, MainHeader},
   mixins: [ppMixin],
@@ -347,20 +346,6 @@ export default {
       </v-row>
     </v-card>
     <MapCDMX v-if="show_map" id="map"/>
-    <v-card v-if="false">
-      <v-row justify="center" align="center" class="fill-height" v-if="false">
-        <v-col align="center" justify="center" cols="12">
-          <div class="text-h4 mt-3 py-4">
-            Mapa de la Ciudad de México
-          </div>
-          <iframe src="https://datos.cdmx.gob.mx/explore/embed/dataset/coloniascdmx/map/?location=11,19.35715,-99.13548&static=false&datasetcard=false&scrollWheelZoom=false"
-            width="600" 
-            height="700" 
-            frameborder="0"
-          ></iframe>
-        </v-col>   
-      </v-row>
-    </v-card>
     <v-card id="viz" class="ma-2 px-4 text-center">
         <v-icon class="mt-4" large>fa-chart-bar</v-icon> 
       <v-card-text class="text-subtitle-1">
