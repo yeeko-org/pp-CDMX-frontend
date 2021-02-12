@@ -56,7 +56,8 @@ export default {
   */
   axios: {
     baseURL: process.env.NODE_ENV == 'development' 
-    ? 'http://localhost:8000/api'
+    //? 'http://localhost:8000/api'
+    ? 'https://ppcdmx.yeeko.org/api'
     : 'https://ppcdmx.yeeko.org/api',
   },
   /*

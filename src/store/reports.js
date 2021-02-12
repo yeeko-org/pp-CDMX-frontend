@@ -11,6 +11,7 @@ export const state = () => ({
   selected_suburb_shape: undefined,
   suburb_id: undefined,
   current_section: {},
+  data_viz: undefined,
 })
 
 export const mutations = {
@@ -49,6 +50,9 @@ export const mutations = {
   },
   SET_SECTION(state, [section_name, value]){
     state.current_section[section_name] = value
+  },
+  SET_DATA_VIZ(state, data){
+    state.data_viz = data
   },
   SET_SUBURB_SHAPE(state, suburb_data){
     state.selected_suburb_shape = suburb_data.geo_data
@@ -129,6 +133,14 @@ export const actions = {
     return new Promise (resolve => {
       this.$axios.get('/project/final_project/1/').then(({data})=>{
         commit("SET_FINAL_PROJECTS", data)
+        return resolve(data)
+      })
+    })
+  },
+  FETCH_DATA_VIZ({commit}){
+    return new Promise (resolve => {
+      this.$axios.get('/public_account/amount_variation/').then(({data})=>{
+        commit("SET_DATA_VIZ", data)
         return resolve(data)
       })
     })

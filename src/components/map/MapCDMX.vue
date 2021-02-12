@@ -15,8 +15,8 @@ export default {
   mixins: [ppMixin, mixinLegend],
   data(){
     return{
-      posX:200,
-      posY:200,
+      posX: 200,
+      posY: 200,
       loaded_data: false,
       click_on_sub_sel: false,
       zoom_townhall: undefined,
