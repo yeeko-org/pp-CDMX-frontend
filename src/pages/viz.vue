@@ -1,7 +1,4 @@
 <script>
-import AutoComplete from "~/components/common/AutoComplete";
-import MapCDMX from "~/components/map/MapCDMX";
-import MainHeader from "~/components/home/MainHeader";
 import ppMixin from "~/mixins/ppMixin";
 import { mapState, mapActions } from "vuex";
 import * as d3 from 'd3';
@@ -9,21 +6,20 @@ import * as d3Array from 'd3-array';
 
 export default {
   name: 'Viz',
-  components: { AutoComplete, MapCDMX, MainHeader},
   mixins: [ppMixin],
   data(){
     return {
-      informer_type: '',
-      want_add: false,
-      is_mounted: false,
-      suburb: undefined,
-      show_map: false,
       width: 640,
       height: 740,
-      suburbs_arr: undefined,
-      complete_arr: undefined,
+      paddings: { left: 50, right: 200, top: 140, bottom: 10 },
+      squares: { height: 32, width: 44, padding_x: 0.12, padding_y: 0.08 },
       built: false,
+      ammounts : [
+        { name: 'executed_mean', color: '#700174', text: 'ejecutado'},
+        { name: 'approved_mean', color: '#00bcd4', text: 'aprobado' }
+      ],
       periods:[
+        { id: 0, year: 'mean' },
         { id: 3, year: 2014 },
         { id: 4, year: 2015 },
         { id: 5, year: 2016 },
@@ -31,259 +27,279 @@ export default {
         { id: 1, year: 2018 },
         { id: 6, year: 2019 },
       ],
-      budgets: [
-        { name: 'Aprobado', key_name: 'approved'},
-        { name: 'Modificado', key_name: 'modified'},
-        { name: 'Ejercido', key_name: 'executed'},
+      columns:[
+        {name: 'not_executed', text: 'no ejecutado', color: '#d73027a0'},
+        {name: 'minus_10', text: 'menor a 90%', color: '#fdae6190'},
+        {name: 'minus_5', text: '90% - 97.5%', color: '#fee08b90'},
+        {name: 'similar', text: 'similiar', color: '#b4b4b438'},
+        {name: 'plus_5', text: 'más de 102.5%', color: '#d9ef8b99'},
       ],
-      //background: require("@/assets/background7.jpg"),
-      //mapeo: require("@/assets/mapeo.png"),
-      reports:[
-        {title:'Primer Informe 2019', subtitle:'septiembre 2019', 
-          url: 'https//:facebook.com'}
-      ],
-
+      mean_th: {id: 0, name: 'Promedio', short_name: 'mean'},
+      legend: { width: 70, height: 15 },
     }
   },
   computed:{
     ...mapState({
-      townhalls: state => state.reports.townhalls,
-      categories: state => state.reports.categories,
-      suburb_types: state => state.reports.suburb_types,
-      selected_suburb: state => state.reports.selected_suburb,
-      suburb_id: state => state.reports.suburb_id,
-      data_viz: state => state.reports.data_viz,
+      hered_townhalls: state => state.reports.townhalls,
+      public_accounts: state => state.reports.data_viz,
     }),
-    final_project(){
-      try{
-        return this.selected_suburb.final_projects[0]
-      }
-      catch(err){
-        return {}
-      }
+    townhalls: (vm) =>  [...[vm.mean_th], ...vm.hered_townhalls],
+    column_names: (vm) => vm.names(vm.columns),
+    ammount_names: (vm) => vm.names(vm.ammounts),
+    all_th(){
+      let fields_base = ['townhall', 'period_pp']
+      let meansByCat = (arr, curr_field) =>
+        Array.from(d3Array.group(arr, d=>d[curr_field]), ([key, value]) => {
+          let final_data = fields_base.reduce((dicc, field)=>(
+            { ...dicc, ...{[field]: (field == curr_field) ? key : 0} } ),{})
+          let redu = (coll, oper) => 
+            coll.forEach(fld=> final_data[fld] = d3[oper](value, d => d[fld]))
+          redu(this.ammount_names, 'mean')
+          redu(this.column_names, 'sum')
+          return final_data          
+        })
+      return fields_base.reduce((tot, field)=>(
+        [ ...tot, ...meansByCat(tot, field) ]
+      ), this.public_accounts.filter(pa=> !pa.no_info) )
     },
-    all_projects(){
-      try{
-        return this.selected_suburb.final_projects[0].projects
-      }
-      catch(err){
-        return []
-      }
-    },
-    fast_suburb(){
-      if (this.suburb_id)
-        return this.suburbs.find(sub=>sub.id==this.suburb_id)
-      else
-        return null
-    }
-  },
-  watch:{
-    townhalls(after){
-      if (after && this.data_viz && !this.built)
-        this.build_map()
-    },
-    data_viz(after){
-      if (after && this.townhalls && !this.built)
-        this.build_map()
-    },
+    grouped_years_arr: (vm) =>
+      Array.from(d3Array.group(vm.all_th, d=>d.period_pp), ([key, value]) =>
+        Object.assign(value, { period_pp: key }) ),
+    max_th: (vm) => d3Array.rollup(vm.all_th,
+        v => d3.max(v, d => d3.max(vm.ammount_names.map(amm=>d[amm]))) * 1.1,
+        d => d.townhall) ,
   },
   created(){
     this.fetchCatalogs().then(cats=>{
-      this.show_map = true
+      this.build_map()
     })
     this.fetchDataViz().then(res=>{
-      console.log("hola")
-      this.show_map = true
+      this.build_map()
     })
-  },
-  mounted(){
-    this.is_mounted = true
   },
   methods: {
     ...mapActions({
       fetchCatalogs : 'reports/FETCH_CATALOGS',
       fetchDataViz : 'reports/FETCH_DATA_VIZ',
     }),
-    goToForm(offs=30){
-      this.$vuetify.goTo('#save_form', 
-        {duration: 400, offset: 30, easing:'easeInOutCubic'})
-    },
+    names: (arr) => arr.map(el=>el.name),
     formatAmmount(val){
       if (isNaN(val))
         return "-"
       else
         return d3.format("($,.2f")(val)
     },
+    series(data_year){
+      return d3.stack()
+        .keys(this.column_names)
+        .offset(d3.stackOffsetExpand)
+      (data_year)
+        .map(d => (d.forEach(v => v.key = d.key), d))
+    },
     build_map(){
-
       var vm = this
-
+      if (!vm.public_accounts || !vm.hered_townhalls || vm.built)
+        return
       this.built = true
-      let columns = [
-        'not_executed',
-        'minus_10',
-        'minus_5',
-        //'no_info',
-        'similar',
-        'plus_5',
-      ]
+      let sq_paddings = { x: vm.squares.height * vm.squares.padding_y,
+        y: vm.squares.width * vm.squares.padding_x }
 
-      let grouped_years = d3Array.group(vm.data_viz, 
-        d => vm.periods.find(period=> period.id ==d.period_pp).year)
-
-      console.log(grouped_years)
-
-      let max_th = d3Array.rollup(vm.data_viz,
-        v=> d3.max(v, d => Math.max(d.executed_mean, d.approved_mean))*1.1, 
-        d => d.townhall)
-      console.log(max_th)
-
-      let series = function(data_year){
-        return d3.stack()
-          .keys(columns)
-          .offset(d3.stackOffsetExpand)
-        (data_year)
-          .map(d => (d.forEach(v => v.key = d.key), d))
-      }
-
+      let len_th = vm.townhalls.length + 1
+      let base_height = ((len_th + 1) * vm.squares.height)
+        + ((len_th + 2 ) * sq_paddings.y)
+      let height = base_height + vm.paddings.top + vm.paddings.bottom
+      console.log(height)
       const svg = d3.select('#DataViz')
-          .attr("viewBox", [0, 0, vm.width, vm.height]);
+          .attr("viewBox", [0, 0, vm.width, height]);
 
-      var x_cols = d3.scaleBand()
-          .domain(vm.periods.map(d => d.year))
-          .range([50, vm.width - 200])
-          .padding(0.08)
+      var xColScale = d3.scaleBand()
+          .domain( vm.periods.map(d => d.id))
+          .range([vm.paddings.left, vm.width - vm.paddings.right])
+          .padding(vm.squares.padding_x)
+      let x_cols = (val) => xColScale(val) + (val ? 10 : 0)
 
       var x = d3.scaleLinear()
-          .range([0, 44])
+          .range([ 0, vm.squares.width ])
       
-      var y = d3.scaleBand()
-        .domain(vm.townhalls.map(d => d.id))
-        .range([60, vm.height - 10])
-        .padding(0.12)
+      var yScale = d3.scaleBand()
+        .domain(vm.townhalls.map(th => th.id))
+        .range([vm.paddings.top, height - vm.paddings.bottom])
+        .padding(vm.squares.padding_y)
+      var y = (val) => yScale(val) + (val ? (sq_paddings.y * 2) : 0)
 
       var dinamic_y = d3.scaleLinear()
-        .range([30, 0])
-
-      let colors_x = ['#d7302786', "#fdae61B3", '#fee08bA3', '#f7f7f7', '#abdda4BF']
-      //["#a50026","#d73027","#f46d43","#fdae61","#fee08b","#ffffbf","#d9ef8b","#a6d96a","#66bd63","#1a9850","#006837"]
-      var color = d3.scaleOrdinal()
-          .domain(columns)
-          .range(d3.schemeSpectral[columns.length])
-          .unknown("#ccc")
-
-      //console.log(grouped_years.get(2018))
-      //console.log(series(grouped_years.get(2018)))
-
-      let grouped_years_arr = Array.from(grouped_years, ([key, value]) =>
-        Object.assign(value, { year: key }) )
+        .range([vm.squares.height, 0])
 
       let years = svg.append("g")
         .selectAll("g")
-        .data(grouped_years_arr)
+        .data(vm.grouped_years_arr)
         .join('g')
-          //.attr('x', d => x_cols(d.year))
-          .attr('transform', (d, i)=> `translate(${x_cols(d.year)},0)`)
-            /*.append('text')
-            .attr('x', x_cols(d.year))
-            .attr('y', 20)
-            .text(d => d.year)*/
+          .attr('transform', (d, i)=> `translate(${x_cols(d.period_pp)},0)`)
 
       years
         .append('text')
-          //.attr('x', 70)//d=> x_cols(d.year))
-          .attr('y', 50)
-          .text(d => d.year)
+          .attr('y', vm.paddings.top)
+          .text(d => vm.periods.find(per=> per.id == d.period_pp).year )
 
       let row_texts = svg.append("g")
-        .selectAll("text")
+        .selectAll("text_container")
         .data(vm.townhalls)
-        .join('text')
+        .join('g')
+          .attr('class', 'text_container')
+          //.attr('y', d=> y(d.id))
+          .attr('transform', d=> `translate(3, ${y(d.id)})`)
+
+      row_texts
+        .append('text')
           .text(d=> d.short_name)
-          .attr('dominant-baseline', 'central')
-          //.attr('x', d => x_cols(d.year))
-          .attr('transform', (d, i)=> `translate(3, ${y(d.id) + 15})`)
+          .attr('dominant-baseline', 'middle')
+          .attr('transform', d=> `translate(0, ${vm.squares.height / 2})`)
 
+      row_texts
+        .append('text')
+          .filter(d=> !!d.id)
+          .text(d=> d3.format('.3s')(vm.max_th.get(d.id)) )
+          .attr('dominant-baseline', 'middle')
+          .attr('text-anchor', 'end')
+          .attr('transform', (d, i) => 
+            `translate(${vm.paddings.left - 3}, 0)`)
+          .attr('font-size', '7px')
 
+      row_texts
+        .append('path')
+          .filter(d=> !!d.id)
+          .attr("d", ()=>{
+            let h = yScale.bandwidth()
+            return `M 0 -0.5 4 -0.5 4 ${h} 3 ${h} 3 .5 0 .5 Z`
+          })
+          .style("stroke-width", 1)
+          .attr('transform', (d, i) => 
+            `translate(${vm.paddings.left - 1}, 0)`)          
+          //.attr("fill", (d, i) => d3.schemeCategory10[i+2])
+          //.attr("transform", d => `translate(${d.x - 20}, ${d.y - 40})`)
 
       let range_color = years
         .selectAll("g")
-        .data(d => series(d))
+        .data(d => vm.series(d))
         .join("g")
-          //.attr("fill", d => color(d.key))
-          .attr("fill", (d, i) => colors_x[i])
+          .attr("fill", d => vm.columns.find(col=>col.name == d.key).color)
 
       range_color
         .selectAll("rect")
         .data(d => d)
         .join("rect")
           .attr("x", d => x(d[0]))
-          .attr("y", (d, i) => y(d.data.townhall))
+          .attr("y", (d, i) => y(d.data.townhall) )
           .attr("width", d => x(d[1]) - x(d[0]))
-          .attr("height", y.bandwidth())
-          //.append("title")
-            //.text(d => `${d.data.name} ${d.key}
-      //${formatPercent(d[1] - d[0])} (${formatValue(d.data[d.key])})`);
-
-      //const g = svg.append("g");
-
-      let ammounts = ['executed_mean', 'approved_mean',]
-      let colors_y = ['#700174', '#00bcd4']
-      let colors_y2 = ['#70017440', '#00bcd440']
+          .attr("height", yScale.bandwidth())
 
       var townhalls = years
         .selectAll(".clicklable")
         .data(d => d)
         .join("g")
-          //.attr("fill", "grey")
-          //.attr("y", (d, i) => y(d.townhall))
+          .filter(d => !!d.townhall)
           .attr('transform', (d, i)=> `translate(0,${y(d.townhall)})`)
-          .attr("stroke", "grey")
-          //.call()
-          /*.call(alg => {
-            console.log(alg)
-          })*/
           .each( function(p, j){
-            let exec = p.executed_mean
-            let appr = p.approved_mean
-            let extent = d3.extent([exec, appr])
-            dinamic_y.domain([0, max_th.get(p.townhall)])
-            d3.select(this)
-              .append("rect")
-                .attr("fill", colors_y2[exec > appr ? 1 : 0])
+            dinamic_y.domain([0, vm.max_th.get(p.townhall)])
+            let amms = vm.ammounts.map(amm=> (
+              { ...amm, ...{ y: dinamic_y(p[amm.name])} } ) )
+            let extent = amms.sort((a, b)=> b.y - a.y)
+
+            var common_rects = (sel) => sel
                 .attr('x', 0)
-                .attr('y', dinamic_y(extent[1]) )
-                .attr('height', dinamic_y(extent[0]) - dinamic_y(extent[1]))
-                .attr('width', 44)
+                .attr('width', vm.squares.width)
                 .attr("stroke-width", 0)
 
+            d3.select(this)
+              .append("rect")
+                .call(common_rects)
+                .attr("fill", `${extent[0].color}40`)
+                .attr('y', extent[1].y )
+                .attr('height', extent[0].y - extent[1].y)
 
+            d3.select(this)
+              .selectAll('#draws')
+              .data(amms)
+              .join("rect")
+                .call(common_rects)
+                .attr("fill", q => q.color)
+                .attr('y', q => q.y)
+                .attr('height', 1.2)
+
+            d3.select(this)
+              .append("text")
+                .filter(d=> d.period_pp)
+                .attr('y', yScale.bandwidth()-4)
+                .attr('x', vm.squares.width)
+                .attr("alignment-baseline", "hanging")
+                .attr("font-size", "7px")
+                .attr('text-anchor', 'end')
+                .text(d=> vm.column_names.reduce((tot, col)=> tot+= d[col], 0))
           })
 
-      var func_ej2 = (sel) => sel
-        .style('fill', d=> vm[`color_${d.sex.substr(0,1)}`])
-        .attr("text-anchor", d => d.sex == 'mujer' ? "start" : "end")
+      svg
+        .append("text")
+          .attr("y", 0)
+          .attr("alignment-baseline", "hanging")
+          .attr("font-size", "14px")
+          .style("text-anchor", "start")
+          .text('Proyectos según proporción entre el monto ejecutado y el asignado')
+
+      svg.selectAll("mylabels")
+        .data(vm.columns)
+        .enter()
+        .append("text")
+          .attr("x", (d, i) => (i + 0.5) * vm.legend.width )
+          .attr("y", 20)
+          .style("fill", d=>  d.color.substr(0,7))
+          .attr("alignment-baseline", "hanging")
+          .attr("font-size", "11px")
+          .style("text-anchor", "middle")
+          .text(d=> d.text)
+
+      svg.selectAll("mydots")
+        .data(vm.columns)
+        .enter()
+        .append("rect")
+          .attr("x", (d, i)=> i*(vm.legend.width))
+          .attr("y", 34)
+          .attr("width", vm.legend.width)
+          .attr("height", vm.legend.height)
+          .style("fill", d => d.color)
+      
+      let leg_amm = svg.append("g")
+
+      svg
+        .append("text")
+          .attr("y", 70)
+          .attr("alignment-baseline", "hanging")
+          .attr("font-size", "14px")
+          .style("text-anchor", "start")
+          .text('Promedio de montos por Alcaldía')
 
 
-      let means = townhalls
-        .selectAll('#draws')
-        .data(ammounts)
-        .join("rect")
-        //.append("rect")
-          .attr("fill", (d, i) => colors_y[i])
-          .attr('x', 0)
-          .attr('y', function(d, i){
-            let datum = d3.select(this.parentNode).datum()
-            let curr_max = max_th.get(datum.townhall)
-            let variation = datum[d]/curr_max
-            dinamic_y.domain([0, curr_max])
-            return dinamic_y(datum[d]) //+ y(datum.townhall)
-          })
-          .attr('height', 1.2)
-          .attr('width', 44)
-          .attr("id", 'draws')
-          .attr("stroke-width", 0)
+      leg_amm
+        .selectAll("legend_vert")
+        .data(vm.ammounts.reverse())
+        .enter()
+        .append("rect")
+          .attr("x", (d, i)=> i*(vm.legend.width * 2.5))
+          .attr("y", 100)
+          .attr("width", vm.legend.width / 2)
+          .attr("height", 2)
+          .style("fill", d => d.color)
 
+      leg_amm
+        .selectAll("text_vert")
+        .data(vm.ammounts)
+        .enter()
+        .append("text")
+          .attr("x", (d, i)=> (vm.legend.width / 2) + 5 + i*(vm.legend.width * 2.5))
+          .attr("y", 100)
+          .style("fill", d => d.color)
+          .attr("alignment-baseline", "middle")
+          .attr("font-size", "13px")
+          .text(d=> d.text)
 
     },
   },  
@@ -291,25 +307,11 @@ export default {
 </script>
 
 <template>
-  <div style="width: 100%">
-    <v-card id="viz" class="ma-2 px-4 text-center">
-        <v-icon class="mt-4" large>fa-chart-bar</v-icon> 
-      <v-card-text class="text-subtitle-1">
-        <svg id="DataViz">
-        </svg>
-      </v-card-text>
-    </v-card>
-  </div>
+  <v-card id="viz" class="ma-2 px-4 text-center">
+    <v-icon class="mt-4" large>fa-chart-bar</v-icon> 
+    <v-card-text class="text-subtitle-1">
+      <svg id="DataViz">
+      </svg>
+    </v-card-text>
+  </v-card>
 </template>
-
-<style lang="scss">
-.blue-back {
-  //background: rgb(38 54 146 / .8);
-  //background: rgb(256 256 256 / .5);
-  background: #8dc63f68;
-}
-@import '../assets/util.scss';
-.up-report{
-  margin-top : -40px !important;
-}
-</style>
