@@ -15,8 +15,8 @@ export default {
       //base_url: 'https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/',
       url_image: '',
       current_image: undefined,
-      divisors: [],
-      references: [],
+      divisors: undefined,
+      references: undefined,
       show_svg: false,
       loading: true
     }
