@@ -12,7 +12,7 @@ export default {
       width: 2200,
       height: 1700,
       radius: 12,
-      base_url: 'https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/',
+      //base_url: 'https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/',
       url_image: '',
       current_image: undefined,
       divisors: [],
@@ -22,21 +22,25 @@ export default {
     }
   },
   computed:{
+    base_url(){
+      let base = 'https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/'
+      return process.env.NODE_ENV == 'development' ? base : ''
+    }
   },
   mounted(){
     this.getNext().then(res=>{
       console.log(res)
       this.loading = false
       this.show_svg = true
-      this.resetReferences()
       this.current_image = res
+      this.resetReferences()
       this.drawImage()
     })    
   },
   watch:{
     url_image(after, before){
       d3.select("#back_image")
-        .attr('xlink:href', after) //`${base_url}${after}`)
+        .attr('xlink:href', `${base_url}${after}`)
     }
   },
   methods:{
@@ -53,18 +57,32 @@ export default {
       if (this.current_image.divisors)
         new_data.divisors = this.divisors
       this.postNext(new_data).then(res=>{
-      this.$vuetify.goTo(0,
-        {duration: 400, offset: 20, easing:'easeInOutCubic'})
+        this.$vuetify.goTo(0,
+          {duration: 400, offset: 20, easing:'easeInOutCubic'})
 
         this.loading = false
         d3.select("#back_image")
-          .attr('xlink:href',  res.url)//`${this.base_url}${res.url}`)
+          .attr('xlink:href',  `${this.base_url}${res.url}`)
+        this.current_image = res
         this.resetReferences()
         this.drawImage()
-        this.current_image = res
       })
     },
     resetReferences(){
+      let bases = this.current_image.data
+        ? [this.current_image.data.divisors, this.current_image.data.references]
+        : [null, null]
+      this.divisors = bases[0] || [{ "x": 497, "y": 594 },
+              { "x": 889, "y": 597 },
+              { "x": 1317, "y": 598 },
+              { "x": 1462, "y": 590 },
+              { "x": 1650, "y": 594 },
+              { "x": 1832, "y": 594 },
+              { "x": 2010, "y": 596 }]
+      this.references = bases[1] || [ { "x": 111, "y": 448 },
+            { "x": 2118, "y": 1390 } ]
+    },
+    resetReferences_old(){
       this.divisors = [
         { "x": 497, "y": 594 },
         { "x": 889, "y": 597 },
@@ -89,8 +107,8 @@ export default {
         .attr("viewBox", [0, 0, vm.width, vm.height])
       console.log(svg)
       
-      //let url = `${vm.base_url}${vm.current_image.url}` // "https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/2014/PP-2014-AO_0001.png"
-      let url = vm.current_image.url
+      let url = `${vm.base_url}${vm.current_image.url}` // "https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/2014/PP-2014-AO_0001.png"
+      //let url = vm.current_image.url
       svg.append('image')
         .attr('xlink:href', url)
         .attr('width', vm.width)
