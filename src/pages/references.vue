@@ -79,8 +79,8 @@ export default {
               { "x": 1650, "y": 594 },
               { "x": 1832, "y": 594 },
               { "x": 2010, "y": 596 }]
-      this.references = bases[1] || [ { "x": 111, "y": 448 },
-            { "x": 2118, "y": 1390 } ]
+      this.references = bases[1] || this.references
+        || [ { "x": 111, "y": 448 }, { "x": 2118, "y": 1390 } ]
     },
     resetReferences_old(){
       this.divisors = [
