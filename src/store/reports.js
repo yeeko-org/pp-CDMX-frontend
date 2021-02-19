@@ -12,7 +12,51 @@ export const state = () => ({
   suburb_id: undefined,
   current_section: {},
   data_viz: undefined,
+  public_accounts: undefined,
+  curr_pa_idx: undefined,
+  pa_in_review: undefined,
 })
+
+export const getters = {
+  suburbs_geo(state) {
+    return state.suburbs
+      ? state.suburbs.filter(sub=>{
+        const geopoint = JSON.parse(sub.geo_point)
+        if (geopoint){
+          sub.real_geo_point = [geopoint[1],geopoint[0]]
+          return sub
+        }
+      })
+      : []
+  },
+  project_indicators(state) {
+    return state.current_projects
+      ? state.current_projects.map(proj=>{
+        try{
+          proj.participation = proj.total_votes / 
+            state.suburbs.find(sub=>sub.id == proj.suburb).pob_2010
+        }
+        catch(err){
+          proj.participation = null
+        }
+        return proj
+
+      })
+      : []
+  },
+  active_section(state) {
+    let cs = state.current_section
+    if (cs["intro"])
+      return 0
+    else if (cs["search"])
+      return 1
+    else if (cs["map"])
+      return 2
+    else
+      return "wacha"
+  },
+
+}
 
 export const mutations = {
   SET_CATS(state, data){
@@ -54,6 +98,18 @@ export const mutations = {
   SET_DATA_VIZ(state, data){
     state.data_viz = data
   },
+  SET_PUBLIC_ACCOUNTS(state, public_accounts){
+    state.public_accounts = public_accounts
+    if (!state.curr_pa_idx)
+      state.curr_pa_idx = public_accounts.findIndex(pa => !pa.match_review)
+  },
+  SET_PA_IN_REVIEW(state, public_account){
+    state.pa_in_review = public_account
+  },
+  SET_NEXT_PA_IDX(state, curr_idx){
+    state.curr_pa_idx = state.public_accounts.findIndex(
+      (pa, idx) => !pa.match_review && idx > curr_idx )
+  },
   SET_SUBURB_SHAPE(state, suburb_data){
     state.selected_suburb_shape = suburb_data.geo_data
       ? {
@@ -65,47 +121,6 @@ export const mutations = {
         }
       : undefined
   },
-}
-
-export const getters = {
-  suburbs_geo(state) {
-    return state.suburbs
-      ? state.suburbs.filter(sub=>{
-        const geopoint = JSON.parse(sub.geo_point)
-        if (geopoint){
-          sub.real_geo_point = [geopoint[1],geopoint[0]]
-          return sub
-        }
-      })
-      : []
-  },
-  project_indicators(state) {
-    return state.current_projects
-      ? state.current_projects.map(proj=>{
-        try{
-          proj.participation = proj.total_votes / 
-            state.suburbs.find(sub=>sub.id == proj.suburb).pob_2010
-        }
-        catch(err){
-          proj.participation = null
-        }
-        return proj
-
-      })
-      : []
-  },
-  active_section(state) {
-    let cs = state.current_section
-    if (cs["intro"])
-      return 0
-    else if (cs["search"])
-      return 1
-    else if (cs["map"])
-      return 2
-    else
-      return "wacha"
-  },
-
 }
 
 export const actions = {
@@ -156,6 +171,33 @@ export const actions = {
     return new Promise (resolve => {
       this.$axios.post('/public_account/next/', curr_data).then(({data})=>{
         //commit("SET_FINAL_PROJECTS", data)
+        return resolve(data)
+      })
+    })
+  },
+  FETCH_PUBLIC_ACCOUNTS({commit}){
+    return new Promise (resolve => {
+      let params = '?orphan_rows=true&match_review=false'
+      this.$axios.get(`/public_account/${params}/`).then(({data})=>{
+        commit("SET_PUBLIC_ACCOUNTS", data)
+        return resolve(data)
+      })
+    })
+  },
+  GET_PUBLIC_ACCOUNT({commit, state}, pa_idx){
+    let pa_id = state.public_accounts[pa_idx].id
+    return new Promise (resolve => {
+      this.$axios.get(`/public_account/${pa_id}/orphan_rows/`).then(({data})=>{
+        commit("SET_PA_IN_REVIEW", data)
+        return resolve(data)
+      })
+    })
+  },
+  POST_PUBLIC_ACCOUNT({commit, state}, new_data){
+    let pa_id = state.pa_in_review.public_account_id
+    return new Promise (resolve => {
+      this.$axios.post(`/public_account/${pa_id}/orphan_rows/`, new_data).then(({data})=>{
+        commit("SET_NEXT_PA_IDX", state.curr_pa_idx)
         return resolve(data)
       })
     })
