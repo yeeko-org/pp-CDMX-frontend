@@ -203,25 +203,17 @@ export default {
     }
   },
   mounted(){
-    if (!this.public_accounts_raw){
-      this.fetchPublicAccounts(false).then(res=>{
-        console.log(res)
-        //this.public_accounts_raw = res
-        this.loading = false
-        console.log(this.public_accounts)
-      })
-    }
-    else
-      console.log(this.public_accounts)
-    //this.resetImage()
   },
   methods:{
     ...mapActions({
       getNext : 'reports/GET_NEXT',
       postNext : 'reports/POST_NEXT',
       getImage : 'reports/GET_IMAGE',
-      fetchPublicAccounts : 'reports/FETCH_PUBLIC_ACCOUNTS',
+      fetchPAs : 'reports/FETCH_PUBLIC_ACCOUNTS',
     }),
+    fetchPublicAccounts(year){
+      this.fetchPAs(`?year=${year}`)
+    },
     resetImage(forced_id){
       let random_id = forced_id || Math.ceil(Math.random()*1006)
       this.getImage(random_id).then(res=>{
@@ -389,21 +381,30 @@ export default {
   <v-card>
     <v-card-title primary-title class="pb-0">
       <v-select
+        :items="['2014', '2015', '2015', '2016', '2017', '2018', '2019']"
+        label="Año"
+        outlined
+        class="mr-3"
+        style="max-width: 100px;"
+        @change="fetchPublicAccounts"
+      ></v-select>
+      <v-select
         :items="public_accounts"
         label="Cuenta pública"
         return-object
         outlined
         item-value="id"
         v-model="selected_pp"
+        style="max-width: 350px;"
       >
         <template v-slot:selection="{ item }">
-          {{`${item.period_pp} -- ${item.townhall}`}}
+          {{item.townhall}}
         </template>
         <template v-slot:item="{ item }">
           <v-icon :color="item.status.color" class="mr-2">
             {{item.status.icon}}
           </v-icon>
-          {{`${item.period_pp} -- ${item.townhall}`}}
+          {{`${item.townhall} (${item.period_pp})`}}
         </template>
       </v-select>
       <v-spacer></v-spacer>

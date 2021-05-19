@@ -31,9 +31,7 @@ export default {
     },
   },
   created(){
-    this.fetchPublicAccounts().then(pas=>{
-      //console.log(pas)
-    })
+    this.fetchPublicAccounts('?orphan_rows=true&match_review=false')
   },  
   mounted(){
   },

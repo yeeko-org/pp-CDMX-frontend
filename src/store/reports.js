@@ -15,6 +15,7 @@ export const state = () => ({
   public_accounts: undefined,
   curr_pa_idx: undefined,
   pa_in_review: undefined,
+  periods: undefined,
 })
 
 export const getters = {
@@ -64,6 +65,7 @@ export const mutations = {
     state.townhalls = data.townhall.sort((x, y)=>
         d3.descending(x.name, y.name))
     state.suburb_types = data.suburb_type
+    state.periods = data.period
     state.categories = data.categories.map((cat,idx)=>{
       cat.color=d3.schemeDark2[idx]
       return cat
@@ -182,11 +184,8 @@ export const actions = {
       })
     })
   },
-  FETCH_PUBLIC_ACCOUNTS({commit}, with_params=true){
+  FETCH_PUBLIC_ACCOUNTS({commit}, params){
     return new Promise (resolve => {
-      let params = with_params
-        ? '?orphan_rows=true&match_review=false'
-        : ''
       this.$axios.get(`/public_account/${params}`).then(({data})=>{
         commit("SET_PUBLIC_ACCOUNTS", data)
         return resolve(data)

@@ -19,6 +19,7 @@ export default {
       show_map: false,
       suburbs_arr: undefined,
       complete_arr: undefined,
+      tab: undefined,
       budgets: [
         { name: 'Aprobado', key_name: 'approved'},
         { name: 'Modificado', key_name: 'modified'},
@@ -41,6 +42,7 @@ export default {
       suburb_types: state => state.reports.suburb_types,
       selected_suburb: state => state.reports.selected_suburb,
       suburb_id: state => state.reports.suburb_id,
+      periods: state => state.reports.periods,
     }),
     _suburbs_arr(){
       var insts = this.institutions.filter(ins=>ins.relevance==1)
@@ -102,12 +104,24 @@ export default {
         return this.suburbs.find(sub=>sub.id==this.suburb_id)
       else
         return null
-    }
+    },
+    final_projects(){
+      if (!this.selected_suburb)
+        return []
+      return this.selected_suburb.final_projects
+        .slice().sort((a,b)=> d3.ascending(a.year, b.year))
+
+    },
+    is_vertical(){
+      return this.$breakpoint.is.mdAndUp
+    },
   },
   watch:{
     suburbs(subs){
       //let baseData = [...subs]
       //return 
+      if (!this.townhalls)
+        return []
       this.townhalls.map(th=>{
         th.name_upper= th.name.toUpperCase()
       })
@@ -154,7 +168,10 @@ export default {
       else
         return d3.format("($,.2f")(val)
     },
-  },  
+    formatSimple(num){
+      return d3.format(".3s")(num)
+    },
+  },
 }
 </script>
 
@@ -215,7 +232,7 @@ export default {
       class="py-4"
     >
       <v-row justify="center" align="center" class="fill-height" no-gutters>
-        <v-col align="center" justify="center" cols="12" sm="8" md="6" class="px-2">
+        <v-col align="center" justify="center" cols="12" sm="10" md="8" class="px-2">
           <v-icon
             x-large
             color="accent darken-1"
@@ -245,102 +262,260 @@ export default {
             <div></div>
           </v-skeleton-loader>
           <v-card v-if="fast_suburb" class="mb-5">
+
             <v-card-title primary-title>
               <span class="mr-2 text-uppercase">{{fast_suburb.st_obj.name}}</span>
               {{fast_suburb.name}}<v-spacer></v-spacer>
               {{fast_suburb.townhall_obj.name}}
             </v-card-title>
-            <v-card-text class="text-left">
-              Nombre del proyecto:
-              <span 
-                class="float-right text-h6 font-weight-bold primary--text mt-n3"
-              >2018</span>
-              <br>
-              <span class="text-subtitle-1 black--text">
-                {{found_suburb.description_cp  || winer_project.name_iecm}}
-              </span>
-              <v-chip 
-                v-if="category_winer"
-                dark
-                :color="category_winer.color"
-              >
-                <v-icon class="mr-2" small>{{category_winer.icon}}</v-icon>
-                {{category_winer.name}}
-              </v-chip>
-              <v-row>
-                <v-col cols="4" class="pt-6">
-                  Progreso de la obra: <br>
-                  <div class="body-1 black--text text-center mb-2">
-                    {{found_suburb.progress * 100 }}%
-                  </div>
-                  <template v-if="false">
-                    Anomalías:
-                    <v-chip dark color="primary lighten-2">
-                      Un solo proyecto
-                    </v-chip>
+            <v-tabs
+              class="text-left"
+              v-model="tab"
+              :vertical="is_vertical"
+              optional
+              show-arrows
+              :style="{'max-width': `${$vuetify.breakpoint.width-8}px`}"
+            >
+              <v-divider></v-divider>
+              <span>Años con proyecto:</span>
+              <template v-for="fp in final_projects">
+                <v-tooltip bottom color="grey">
+                  <template v-slot:activator="{ on }">
+                    <v-tab 
+                      v-on="on"
+                      class="text-left"
+                      style="justify-content: start;"
+                      _change="getProbDetails(prob)"
+                    >
+                      <v-badge
+                        v-if="false"
+                        offset-x="12"
+                        :value="!is_report"
+                        offset-y="6"
+                        :color="prob.status.color"
+                        :icon="prob.status.icon"
+                        :content="prob.status.type == 'has_number' 
+                          ? `${prob.actions_complete}/${prob.al_prior_count}` : false"
+                      >          
+                        <v-icon left v-text="`$${prob.icon}`"></v-icon>
+                      </v-badge>
+                      {{fp.year}}
+                      <v-icon class="mx-2" small :color="category_winer.color">
+                        {{category_winer.icon}}
+                      </v-icon>
+                      <v-icon color="red" small class="mx-2" v-if="fp.anomalies.length">
+                        fa-exclamation-circle
+                      </v-icon>
+                      <v-spacer></v-spacer>
+                      {{formatSimple(fp.executed)}}
+                    </v-tab>
                   </template>
-                </v-col>
-                <v-col cols="8">
-                  <v-simple-table dense>
-                    <template v-slot:default>
-                      <thead>
-                        <tr>
-                          <th class="text-left">Presupuesto</th>
-                          <th class="text-right">Monto</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="budget in budgets" :key="budget.key_name">
-                          <td>{{ budget.name }}</td>
-                          <td class="text-right">
-                            {{ formatAmmount(found_suburb[budget.key_name])}}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </template>
-                  </v-simple-table>
-                </v-col>
-                <v-col cols="12">
-                <v-expansion-panels>
-                  <v-expansion-panel>
-                    <v-expansion-panel-header>
-                      {{all_projects.length}} propuestas 
-                      <span class="grey--text ml-3">
-                        ({{final_project.total_votes}} votos en total)
-                      </span>
-                       
-                     </v-expansion-panel-header>
-                    <v-expansion-panel-content>
-                      <v-simple-table dense>
-                        <template v-slot:default>
-                          <thead>
-                            <tr>
-                              <th class="text-left"></th>
-                              <th class="text-left px-0">Nombre</th>
-                              <th class="text-right">Votos</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr v-for="proj in all_projects" :key="proj.id">
-                              <td>
-                                <v-icon color="yellow darken-2" v-if="proj.is_winer">
-                                  fa-trophy
-                                </v-icon>
-                              </td>
-                              <td class="px-0">{{ proj.name_iecm }}</td>
-                              <td class="text-right">{{ proj.votes }}</td>
-                            </tr>
-                          </tbody>
+                  <div>
+                    {{fp.final_name}}
+                    <br>
+                    <v-chip 
+                      v-if="category_winer"
+                      dark
+                      :color="category_winer.color"
+                    >
+                      <v-icon class="mr-2" small>{{category_winer.icon}}</v-icon>
+                      {{category_winer.name}}
+                    </v-chip>
+                  </div>
+                </v-tooltip>
+              </template>
+              <v-tab-item v-for="(fp, index) in final_projects">
+                <v-card outlined tile>
+                  <v-card-text class="text-left">
+                    Categoría:
+                    <v-chip 
+                      v-if="category_winer"
+                      dark
+                      :color="category_winer.color"
+                    >
+                      <v-icon class="mr-2" small>{{category_winer.icon}}</v-icon>
+                      {{category_winer.name}}
+                    </v-chip>
+                    <span 
+                      class="float-right text-h6 font-weight-bold primary--text mt-n3"
+                    >{{fp.year}}</span>
+                    <br>
+                    Nombre del proyecto:
+                    <br>
+                    <span class="text-subtitle-1 black--text">
+                      {{fp.final_name  || 'Desconocido'}}
+                    </span>
+                    <br>
+                    Descripción:
+                    <br>
+                    <span class="text-subtitle-1 black--text">
+                      {{fp.description_cp  || 'Sin descriptión'}}
+                    </span>
+                    <v-row>
+                      <v-col cols="4" class="pt-6">
+                        Progreso reportado: <br>
+                        <div class="body-1 black--text text-center mb-2">
+                          {{fp.progress * 100 }}%
+                        </div>
+                        <template v-if="false">
+                          Anomalías encontradas:
+                          <v-chip dark color="primary lighten-2">
+                            Un solo proyecto
+                          </v-chip>
                         </template>
-                      </v-simple-table>
-                      
-                    </v-expansion-panel-content>
-                  </v-expansion-panel>
-                </v-expansion-panels>                  
-                </v-col>
-              </v-row>
-            </v-card-text>
+                      </v-col>
+                      <v-col cols="8">
+                        <v-simple-table dense>
+                          <template v-slot:default>
+                            <thead>
+                              <tr>
+                                <th class="text-left">Presupuesto</th>
+                                <th class="text-right">Monto</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr v-for="budget in budgets" :key="budget.key_name">
+                                <td>{{ budget.name }}</td>
+                                <td class="text-right">
+                                  {{ formatAmmount(fp[budget.key_name])}}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </template>
+                        </v-simple-table>
+                      </v-col>
+                      <v-col cols="12">
+                        <v-expansion-panels>
+                          <v-expansion-panel>
+                            <v-expansion-panel-header>
+                              {{fp.projects.length}} propuestas 
+                              <span class="grey--text ml-3">
+                                ({{fp.total_votes}} votos en total)
+                              </span>
+                               
+                             </v-expansion-panel-header>
+                            <v-expansion-panel-content>
+                              <v-simple-table dense>
+                                <template v-slot:default>
+                                  <thead>
+                                    <tr>
+                                      <th class="text-left"></th>
+                                      <th class="text-left px-0">Nombre</th>
+                                      <th class="text-right">Votos</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr v-for="proj in fp.projects" :key="proj.id">
+                                      <td>
+                                        <v-icon color="yellow darken-2" v-if="proj.is_winer">
+                                          fa-trophy
+                                        </v-icon>
+                                      </td>
+                                      <td class="px-0">{{ proj.name_iecm }}</td>
+                                      <td class="text-right">{{ proj.votes }}</td>
+                                    </tr>
+                                  </tbody>
+                                </template>
+                              </v-simple-table>
+                              
+                            </v-expansion-panel-content>
+                          </v-expansion-panel>
+                        </v-expansion-panels>              
+                      </v-col>
+                      <v-col cols="12" v-if="fp.anomalies.length">
+                        Anomalías:
+                        <v-tooltip 
+                          v-for="anomaly in fp.anomalies"
+                          :key="anomaly.id"
+                          top 
+                        >
+                          <template v-slot:activator="{ on }">
+                            <v-chip 
+                              v-on="on"
+                              color="red"
+                              dark
+                            >
+                              <v-icon class="mr-2" small>fa-exclamation-circle</v-icon>
+                              {{anomaly.anomaly.name}}
+                            </v-chip>
+                          </template>
+                          <span>{{anomaly.anomaly.description}}</span>
+                        </v-tooltip>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
 
+
+                </v-card>
+
+                <v-card flat color="cyan lighten-5" tile v-if="false">
+                  <ProbHeader :prob="prob" :is_prior="is_prior"/>
+                  <v-divider></v-divider>
+                  <Priorization 
+                    :prob="selected_prob" 
+                    :show="show_content" 
+                    v-if="is_prior"
+                    :year="curr_year"
+                  />
+                  <v-card-text v-else>
+                    <v-alert
+                      prominent
+                      type="info"
+                      elevation="2"
+                    >
+                      {{is_report ?  'Reporta los avances de las acciones que priorizaste y definiste' 
+                        : 'Captura los detalles de implementación para cada acción priorizada'}}
+                    </v-alert>
+                    <v-row class="pa-4" v-if="loading_problematic" justify="center">
+                      <v-progress-circular :size="50" color="#de006e" indeterminate>
+                      </v-progress-circular>
+                    </v-row>
+                    <div
+                      v-for="comp in filtered_comps"
+                      :key="comp.id"
+                    >
+                      <v-subheader class="mt-5 subtitle-1">
+                        <span><b class="mr-1">Proyecto:</b>{{comp.short_name}}</span>
+                      </v-subheader>
+                      <v-divider></v-divider>
+                      <ActionsDefine
+                        v-for="al in comp.filtrered_al"
+                        :key="al.id"
+                        :al="al"
+                        :is_report="is_report"
+                      />
+                    </div>
+                  </v-card-text>
+                  <ActionsDefine
+                    v-if="false"
+                    :prob="selected_prob"
+                    :show="show_content"
+                  />
+                  
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      v-if="tab != 0"
+                      text
+                      class="mb-4"
+                      @click="changeTab(index, false)"
+                      color="primary"
+                    >
+                      Problemática Anterior
+                    </v-btn>
+                    <v-btn
+                      color="secondary"
+                      v-if="tab+1 != problematics.length"
+                      outlined
+                      class="mb-4"
+                      @click="changeTab(index)"
+                    >
+                      Problemática Siguiente
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-tab-item>
+            </v-tabs>
           </v-card>
         </v-col>
       </v-row>
