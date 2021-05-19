@@ -82,21 +82,6 @@ export default {
       this.references = bases[1] || this.references
         || [ { "x": 111, "y": 448 }, { "x": 2118, "y": 1390 } ]
     },
-    resetReferences_old(){
-      this.divisors = [
-        { "x": 497, "y": 594 },
-        { "x": 889, "y": 597 },
-        { "x": 1317, "y": 598 },
-        { "x": 1462, "y": 590 },
-        { "x": 1650, "y": 594 },
-        { "x": 1832, "y": 594 },
-        { "x": 2010, "y": 596 }
-      ]
-      this.references = [
-        { "x": 111, "y": 448 },
-        { "x": 2118, "y": 1390 }
-      ]
-    },
     drawImage(){
       let vm = this
       let circles = vm.divisors

@@ -160,6 +160,13 @@ export const actions = {
       })
     })
   },
+  GET_IMAGE({commit}, img_id){
+    return new Promise (resolve => {
+      this.$axios.get(`/public_account/image/${img_id}/refs/`).then(({data})=>{
+        return resolve(data)
+      })
+    })
+  },
   GET_NEXT({commit}){
     return new Promise (resolve => {
       this.$axios.get('/public_account/next/').then(({data})=>{
@@ -175,10 +182,12 @@ export const actions = {
       })
     })
   },
-  FETCH_PUBLIC_ACCOUNTS({commit}){
+  FETCH_PUBLIC_ACCOUNTS({commit}, with_params=true){
     return new Promise (resolve => {
-      let params = '?orphan_rows=true&match_review=false'
-      this.$axios.get(`/public_account/${params}/`).then(({data})=>{
+      let params = with_params
+        ? '?orphan_rows=true&match_review=false'
+        : ''
+      this.$axios.get(`/public_account/${params}`).then(({data})=>{
         commit("SET_PUBLIC_ACCOUNTS", data)
         return resolve(data)
       })
