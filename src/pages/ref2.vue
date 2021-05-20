@@ -20,6 +20,7 @@ export default {
       fp_data: {},
       show_all_subs: false,
       excercises: [],
+      base_url: 'https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/',
       special_images: [721, 363, 348, 895, 839],
       number_cols: [
         { text: 'Avance', field: 'progress',  is_perc: true, idx: 3},
@@ -34,27 +35,27 @@ export default {
         { text: 'Descripción', field: 'description_cp', cols: 5, idx: 2},
       ],
       status_pp: [
-        { 
+        {
           color: 'green',
           icon: 'fa-check-double',
           text: 'Completo',
           name: 'complete',
           validated: true,
         },
-        { 
+        {
           color: 'amber',
           icon: 'fa-exclamation-triangle',
           text: 'Con pendientes',
           name: 'warning',
           validated: false,
         },
-        { 
+        {
           color: 'lime',
           icon: 'fa-folder-open',
           text: 'Incompleto',
           name: 'incomplete'
         },
-        { 
+        {
           color: 'purple',
           icon: 'fa-ellipsis-h',
           text: 'Por empezar',
@@ -68,12 +69,6 @@ export default {
     ...mapState({
       public_accounts_raw: state => state.reports.public_accounts,
     }),
-    base_url(){
-      let base = 'https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/'
-      if (false)
-        base+='2018/'
-      return process.env.NODE_ENV == 'development' ? base : ''
-    },
     url(){
       if (!this.current_image)
         return ''
