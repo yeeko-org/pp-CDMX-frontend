@@ -109,7 +109,7 @@ export default {
       if (!this.selected_suburb)
         return []
       return this.selected_suburb.final_projects
-        .slice().sort((a,b)=> d3.ascending(a.year, b.year))
+        .slice().sort((a,b)=> d3.descending(a.year, b.year))
 
     },
     is_vertical(){
@@ -277,9 +277,9 @@ export default {
               :style="{'max-width': `${$vuetify.breakpoint.width-8}px`}"
             >
               <v-divider></v-divider>
-              <span>Años con proyecto:</span>
+              
               <template v-for="fp in final_projects">
-                <v-tooltip bottom color="grey">
+                <v-tooltip bottom :color="category_winer.color">
                   <template v-slot:activator="{ on }">
                     <v-tab 
                       v-on="on"
@@ -287,18 +287,6 @@ export default {
                       style="justify-content: start;"
                       _change="getProbDetails(prob)"
                     >
-                      <v-badge
-                        v-if="false"
-                        offset-x="12"
-                        :value="!is_report"
-                        offset-y="6"
-                        :color="prob.status.color"
-                        :icon="prob.status.icon"
-                        :content="prob.status.type == 'has_number' 
-                          ? `${prob.actions_complete}/${prob.al_prior_count}` : false"
-                      >          
-                        <v-icon left v-text="`$${prob.icon}`"></v-icon>
-                      </v-badge>
                       {{fp.year}}
                       <v-icon class="mx-2" small :color="category_winer.color">
                         {{category_winer.icon}}
@@ -307,7 +295,7 @@ export default {
                         fa-exclamation-circle
                       </v-icon>
                       <v-spacer></v-spacer>
-                      {{formatSimple(fp.executed)}}
+                      ${{formatSimple(fp.executed)}}
                     </v-tab>
                   </template>
                   <div>
@@ -315,8 +303,9 @@ export default {
                     <br>
                     <v-chip 
                       v-if="category_winer"
-                      dark
-                      :color="category_winer.color"
+                      outlined
+                      _color="category_winer.color"
+                      color="white"
                     >
                       <v-icon class="mr-2" small>{{category_winer.icon}}</v-icon>
                       {{category_winer.name}}
@@ -328,6 +317,7 @@ export default {
                 <v-card outlined tile>
                   <v-card-text class="text-left">
                     Categoría:
+                    <br>
                     <v-chip 
                       v-if="category_winer"
                       dark
@@ -342,29 +332,19 @@ export default {
                     <br>
                     Nombre del proyecto:
                     <br>
-                    <span class="text-subtitle-1 black--text">
+                    <span class="text-subtitle-1 black--text font-weight-bold">
                       {{fp.final_name  || 'Desconocido'}}
                     </span>
                     <br>
                     Descripción:
                     <br>
-                    <span class="text-subtitle-1 black--text">
+                    <span class="text-subtitle-2 black--text font-weight-regular">
                       {{fp.description_cp  || 'Sin descriptión'}}
                     </span>
-                    <v-row>
-                      <v-col cols="4" class="pt-6">
-                        Progreso reportado: <br>
-                        <div class="body-1 black--text text-center mb-2">
-                          {{fp.progress * 100 }}%
-                        </div>
-                        <template v-if="false">
-                          Anomalías encontradas:
-                          <v-chip dark color="primary lighten-2">
-                            Un solo proyecto
-                          </v-chip>
-                        </template>
-                      </v-col>
+                    
+                    <v-row class="mt-3">
                       <v-col cols="8">
+                        <v-divider></v-divider>
                         <v-simple-table dense>
                           <template v-slot:default>
                             <thead>
@@ -383,6 +363,15 @@ export default {
                             </tbody>
                           </template>
                         </v-simple-table>
+                      </v-col>
+                      <v-col cols="4" class="pa-1 text-center mt-2">
+                        <v-card class="pa-2" color="cyan  lighten-4">
+                          Estado de avance reportado:
+                          <br>
+                          <div class="headline black--text mb-2 mt-2">
+                            {{fp.progress * 100 }}%
+                          </div>
+                        </v-card>
                       </v-col>
                       <v-col cols="12">
                         <v-expansion-panels>
@@ -423,7 +412,9 @@ export default {
                         </v-expansion-panels>              
                       </v-col>
                       <v-col cols="12" v-if="fp.anomalies.length">
-                        Anomalías:
+                        <v-icon color="purple" class="mx-2" v-if="false">fa-question-circle</v-icon>
+                        Anomalías encontradas:
+                        <br>
                         <v-tooltip 
                           v-for="anomaly in fp.anomalies"
                           :key="anomaly.id"

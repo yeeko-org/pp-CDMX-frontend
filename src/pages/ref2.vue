@@ -18,6 +18,7 @@ export default {
       loading: true,
       current_row: {},
       fp_data: {},
+      show_all_subs: false,
       excercises: [],
       special_images: [721, 363, 348, 895, 839],
       number_cols: [
@@ -135,6 +136,9 @@ export default {
           final_project: final_proj,
           color: color,
           orphan_data: orphan_data,
+          idx_tb: idx,
+          idx_up: idx+1,
+          idx_down: idx-1,
         }
       })
       //console.log(final_rows)
@@ -216,12 +220,13 @@ export default {
     },
     resetImage(forced_id){
       let random_id = forced_id || Math.ceil(Math.random()*1006)
+      this.current_image = undefined
+      this.current_row = {}
+      this.fp_data = {}
       this.getImage(random_id).then(res=>{
         /*this.excercises = this.res.orphan_suburbs.map(proj=>(
           { suburb: proj.suburb, seq: undefined, sub_name: proj.suburb_short_name }
         ) )*/
-        this.fp_data = {}
-        this.current_row = {}
         console.log(res)
         this.loading = false
         this.current_image = res
@@ -299,7 +304,8 @@ export default {
           return {...final, ...{ [amm.field]: row.final_project[amm.field] }}
         },{})
         this.large_texts.forEach(lt=>{
-          this.fp_data[lt.field] = row.final_project[lt.field]
+          //this.fp_data[lt.field] = row.final_project[lt.field]
+          this.$set(this.fp_data, lt.field, row.final_project[lt.field])
         })
       }
       else{
@@ -311,8 +317,10 @@ export default {
           },{})
         }
         this.large_texts.forEach(lt=>{
-          if (lt.idx)
-            this.fp_data[lt.field] = base_raw[lt.idx]
+          if (lt.idx){
+            //this.fp_data[lt.field] = base_raw[lt.idx]
+            this.$set(this.fp_data, lt.field, base_raw[lt.idx])
+          }
         })
       }
 
@@ -372,6 +380,40 @@ export default {
               return `translate(${divs[i+parent.idx0] - 2},${row.refs.top})`
             })
     },
+    addSpace(orient){
+      let up = orient == 'up'
+      var svg_images = d3.selectAll(".selected-image")
+      svg_images
+        .attr("viewBox", function(d){
+          try{
+            let current_vb =  d3.select(this).attr("viewBox").split(',')
+            current_vb[1] = parseInt(current_vb[1]) - (up ?  50 : 0 )
+            current_vb[3] = parseInt(current_vb[3]) + 50
+            return current_vb
+          }catch(err){
+            console.log(err)
+          }
+        })
+    },
+    addText(orient, field){
+      const suma = orient == 'up' ?  1 : -1
+      const ref_idx = this.current_row[`idx_${orient}`]
+      const table_data = this.current_image.image.table_data[ref_idx]
+      this.large_texts.forEach(txt=>{
+        if (txt.idx){
+          this.fp_data[txt.field] = suma
+            ? `${this.fp_data[txt.field]} ${table_data[txt.idx]}`
+            : `${table_data[txt.idx]} ${this.fp_data[txt.field]}` 
+        }
+      })
+      this.current_row[`idx_${orient}`] += suma
+    },
+    changeRow(direction){
+      const suma = direction == 'left' ? -1 : 1
+      let new_row = this.rows[this.current_row.idx_tb+suma]
+      if (new_row)
+        this.updateSelected(new_row)
+    },
   },
 
 }
@@ -425,23 +467,41 @@ export default {
           :key="img.id"
           class="ml-2 mb-2"
           :color="img.color"
+          :outlined="current_image ? current_image.image.id != img.id : true"
           dark
           @click="resetImage(img.id)"
         >{{img.path.substr(-6,2)}}</v-chip>
       </v-row>
-      <v-row>
-        <v-col cols="12" v-if="false">
-          Ubica los rombos grandes al comienzo y al final de los datos
-          <br>Los rombos pequeños, si hay, en la división entre las columnas
-        </v-col>
-        <v-col cols="12">
-          <svg id="imageback"></svg>
-        </v-col>
+        
+      <svg id="imageback" v-show="current_image"></svg>
+        
+      <v-row v-show="current_row.color">
         <v-card-title primary-title>
-          Colonia seleccionada:
+          Colonia seleccionada
+          <v-spacer></v-spacer>
+          <v-btn
+            v-for="orient in ['left','right']"
+            color="accent"
+            icon
+            class="ml-2"
+            @click="changeRow(orient)"
+          >
+            <v-icon>{{`fa-angle-double-${orient}`}}</v-icon>
+          </v-btn>          
         </v-card-title>
         <v-col cols="12">
           <svg class="selected-image"></svg>
+          <div class="float-left mt-n7 ml-10">
+            <v-btn
+              v-for="orient in ['up','down']"
+              color="primary"
+              icon
+              class="ml-4"
+              @click="addSpace(orient)"
+            >
+              <v-icon>{{`fa-chevron-${orient}`}}</v-icon>
+            </v-btn>        
+          </div>
         </v-col>
         <v-col
           v-for="lt in large_texts"
@@ -458,13 +518,28 @@ export default {
               label="Colonia coincidente"
             ></v-select>
             {{selectedSuburb}}
+            <v-checkbox 
+              label="Mostrar todas las colonias" 
+              v-model="show_all_subs"
+            ></v-checkbox>
           </template>
-          <v-textarea 
-            v-else
-            :label="lt.text"
-            outlined
-            v-model="fp_data[lt.field]"
-          ></v-textarea>
+          <template v-else>
+            <v-textarea 
+              :label="lt.text"
+              outlined
+              hide-details
+              auto-grow
+              v-model="fp_data[lt.field]"
+            ></v-textarea>
+            <v-chip
+              v-for="orient in ['up','down']"
+              small
+              class="mr-2"
+              @click="addText(orient, lt.field)"
+            >
+              <v-icon icon small>{{`fa-arrow-${orient}`}}</v-icon>
+            </v-chip>
+          </template>
         </v-col>
         <v-col cols="12">
           <svg class="selected-image"></svg>
