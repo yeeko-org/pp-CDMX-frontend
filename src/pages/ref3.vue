@@ -106,7 +106,7 @@ export default {
         let status = this.status_pp.find(st=>st.name == status_name)
         return ({...pa, ...{ status: status }})
       })
-      .slice().sort((a,b)=> d3.ascending(a.period_pp, b.period_pp))
+      .slice().sort((a,b)=> d3.ascending(a.townhall, b.townhall))
     },
     available_images(){
       return this.selected_pp.pp_images.map(img=>(
@@ -189,6 +189,7 @@ export default {
       let fp_matched = final_projects.filter(fp=> fp.rows_count)
         .slice().sort((a,b)=> d3.descending(a.rows_count, b.rows_count))
       let fp_orphans = final_projects.filter(fp=> !fp.rows_count)
+      let empty = { id: null, suburb_name: 'NINGUNO'}
       return [...fp_orphans, ...fp_matched]
        
     },
@@ -331,6 +332,8 @@ export default {
     },
     updateSelected(row){
       let vm = this
+      this.$vuetify.goTo(500,
+        {duration: 400, offset: 20, easing:'easeInOutCubic'})
       console.log(row)
       this.current_row = row
       this.fp_data = {...{}, ...row}
@@ -347,6 +350,8 @@ export default {
         { idx0: 0, idx1: 3, fields: this.large_texts },
         { idx0: 3, idx1: 8, fields: this.number_cols },
       ]
+
+
 
       var svg_images = d3.selectAll(".selected-image")
         .data(images_to_build)
@@ -449,6 +454,7 @@ export default {
         outlined
         class="mr-3"
         style="max-width: 100px;"
+        hide-details
         @change="fetchPublicAccounts"
       ></v-select>
       <v-select
@@ -456,6 +462,7 @@ export default {
         label="Cuenta pública"
         return-object
         outlined
+        hide-details
         item-value="id"
         v-model="selected_pp"
         style="max-width: 350px;"
