@@ -4,7 +4,7 @@ import { mapActions, mapState } from "vuex";
 import * as d3 from 'd3';
 
 export default {
-  name: 'References',
+  name: 'References3',
   layout: 'diamonds',
   components: {  },  
   data () {
@@ -12,8 +12,6 @@ export default {
       width: 2200,
       height: 1700,
       current_image: undefined,
-      divisors: undefined,
-      references: undefined,
       selected_pp: undefined,
       loading: true,
       current_row: {},
@@ -63,6 +61,23 @@ export default {
           validated: null,
         },
       ],
+      valid_options: [
+        {
+          title: "Pendiente",
+          color: "orange",
+          validated: null,
+        },
+        {
+          title: "Válido",
+          color: "green",
+          validated: true,
+        },
+        {
+          title: "Inválido",
+          color: "red",
+          validated: false,
+        },
+      ],      
     }
   },
   computed:{
@@ -80,6 +95,7 @@ export default {
       if (!this.public_accounts_raw)
         return []
       return this.public_accounts_raw.map(pa=>{
+        console.log(pa)
         let status_name = 'pending'
         if (pa.pp_images.some(img=> img.validated === false))
           status_name = 'warning'
@@ -99,78 +115,66 @@ export default {
     },
     rows(){
       let curr_img = this.current_image
-      if (!this.current_image)
+      if (!curr_img)
         return []
-      let table_ref = curr_img.image.table_ref
-      let table_data = curr_img.image.table_data
-      let final_projs = curr_img.final_projects
-      let final_rows = table_data.map((row, idx)=>{
-        let final_proj = final_projs.find(proj=> 
-          proj.data_raw.raw[0] == row[0])
-        let orphan_data = curr_img.orphan_rows.find(orphan=>
-          orphan.raw[0] == row[0])
-        let has_anomalies = false
-        if (final_proj){
-          has_anomalies = final_proj.anomalies.some(an=>
-            (!an.anomaly.is_public && !an.anomaly.name.includes('Variación')))
+      let all_rows = curr_img.rows.slice().sort((a,b)=> 
+        d3.ascending(a.sequential, b.sequential))
+      let final_rows = all_rows.map((row, idx)=>{
+        let final_proj = curr_img.final_projects.find(fp=>
+          fp.id == row.final_project)
+        let has_errors = row.errors.some(err => !err.includes('Variación'))
+        let has_first_col = false 
+        try{
+          has_first_col = !!row.formatted_data[0]
+        } catch(err){
+          console.log(err)
         }
-        let color = final_proj
-          ? final_proj.validated === false
-            ? '#F44336' //red
-            : final_proj.validated === true 
-              ? '#4CAF50' //green
-              : has_anomalies
+        let double_row = false 
+        if (final_proj){
+          if (final_proj.rows_count > 1)
+            double_row = true
+        }
+        let color = row.validated === false
+          ? '#F44336' //red
+          : row.validated === true 
+            ? '#4CAF50' //green
+            : row.final_project
+              ? has_errors
                 ? '#FFC107' //amber
-                : '#CDDC39' //lime
-          : orphan_data
-            ? "#9C27B0" //purple
-            : "#9E9E9E" //grey
-        return { 
-          raw: row,
-          refs: table_ref[idx],
-          final_project: final_proj,
+                : double_row
+                  ? '#673AB7' //deep-purple
+                  : '#CDDC39' //lime
+              : has_first_col
+                ? "#9C27B0" //purple
+                : "#9E9E9E" //grey
+        let complement_row = { 
+          final_project_obj: final_proj,
           color: color,
-          orphan_data: orphan_data,
           idx_tb: idx,
           idx_up: idx+1,
           idx_down: idx-1,
         }
+        return {...row, ...complement_row}
       })
-      //console.log(final_rows)
+      console.log(final_rows)
       return final_rows
     },
     image_refs(){
-      if (!this.current_image)
+      if (!this.current_image || !this.rows.length)
         return {}
-      let json_vars = this.current_image.image.json_variables
-      let start_x = 0
-      let end_x = this.width
-      let start_y = json_vars.unidad_bot || 240
-      let end_y = json_vars.columns_data_bot || this.height
-      let manual_ref = this.current_image.image.manual_ref
-      let divisors = []
-      if (manual_ref){
-        start_x = manual_ref.left
-        end_x = manual_ref.right
-        start_y = manual_ref.columns_top
-        divisors = [...manual_ref.divisors, end_x]
-        end_y = manual_ref.columns_bot
-      }
-      else{
-        start_x = json_vars.columns_boxs[0].left
-        end_x = json_vars.columns_boxs[7].right
-        divisors = json_vars.columns_boxs.map(box => box.right)
-      }
-      let x_refs = [start_x, ...divisors]
+      let divs = this.current_image.image.table_ref_columns
+      let start_y = (this.rows[0].top || 340) - 100
+      console.log(this.rows)
+      let end_y = this.rows[this.rows.length - 1].bottom || this.height
       return { 
-        divisors: x_refs,
-        view_box: [start_x - 20, start_y, end_x - start_x + 40, end_y - start_y]
+        divisors: divs,
+        view_box: [(divs[0] - 40) || 0, start_y,
+                  divs[8] - divs[0] + 40, end_y - start_y]
       }
-      
     },
     available_ammounts(){
       let ammounts = this.number_cols.filter(num=> !num.is_perc)
-      return ammounts.reduce((tot,num)=> {
+      return ammounts.reduce((tot, num)=> {
         let curr_num = parseFloat(this.fp_data[num.field])
         if (!curr_num || tot.includes(curr_num))
           return tot
@@ -181,20 +185,17 @@ export default {
     custom_remain(){
       if (!this.current_image)
         return []
-      let final_proj = this.current_row.final_project
-      if (final_proj){
-        let curr_sub = { 
-          suburb: final_proj.suburb,
-          suburb_name: final_proj.suburb_name
-        }
-        return [ final_proj, ...this.current_image.orphan_suburbs ]
-      }
-      return this.current_image.orphan_suburbs
+      let final_projects = this.current_image.final_projects
+      let fp_matched = final_projects.filter(fp=> fp.rows_count)
+        .slice().sort((a,b)=> d3.descending(a.rows_count, b.rows_count))
+      let fp_orphans = final_projects.filter(fp=> !fp.rows_count)
+      return [...fp_orphans, ...fp_matched]
+       
     },
     selectedSuburb(){
       try{
         return this.custom_remain.find(sub=>
-          sub.suburb == this.fp_data.suburb).suburb_name
+          sub.id == this.fp_data.final_project).suburb_cve_col
       }catch(err){
         return " ------ "
       }
@@ -203,83 +204,121 @@ export default {
   },
   mounted(){
   },
+  watch:{
+    selected_pp(after){
+      this.current_image = undefined
+      this.current_row = {}
+      this.fp_data = {}
+    }
+  },
   methods:{
     ...mapActions({
       getNext : 'reports/GET_NEXT',
       postNext : 'reports/POST_NEXT',
+      putRow : 'reports/PUT_ROW',
+      putImage : 'reports/PUT_IMAGE',
       getImage : 'reports/GET_IMAGE',
       fetchPAs : 'reports/FETCH_PUBLIC_ACCOUNTS',
     }),
     fetchPublicAccounts(year){
+      this.current_image = undefined
+      this.current_row = {}
+      this.fp_data = {}      
+      this.selected_pp = undefined
       this.fetchPAs(`?year=${year}`)
     },
     resetImage(forced_id){
       let random_id = forced_id || Math.ceil(Math.random()*1006)
-      this.current_image = undefined
+      let hard_reset = true
+      if (this.current_image){
+        if (this.current_image.image.id == forced_id)
+          hard_reset = false
+      }
+      if (hard_reset)
+        this.current_image = undefined
       this.current_row = {}
       this.fp_data = {}
       this.getImage(random_id).then(res=>{
-        /*this.excercises = this.res.orphan_suburbs.map(proj=>(
-          { suburb: proj.suburb, seq: undefined, sub_name: proj.suburb_short_name }
-        ) )*/
-        console.log(res)
         this.loading = false
         this.current_image = res
         this.drawImage()
         return
       })
     },
-    saveNext(){
-      let new_data = {
-        id: this.current_image.id,
-        //references: this.references,
-      }
-      return
+    saveRow(option){
+      this.fp_data.validated = option.validated
       this.loading = true
-      this.postNext(new_data).then(res=>{
+      this.putRow(this.fp_data).then(res=>{
         this.$vuetify.goTo(0,
           {duration: 400, offset: 20, easing:'easeInOutCubic'})
-
         this.loading = false
-        d3.select("#back_image")
-          .attr('xlink:href',  `${this.base_url}${res.url}`)
-        this.current_image = res
-        this.drawImage()
+        this.resetImage(this.current_image.image.id)
+      })
+    },
+    saveImage(option){
+      this.loading = true
+      let body = { validated: option }
+      let curr_id = this.current_image.image.id
+      let curr_pp = this.selected_pp.id
+      this.putImage([curr_id, curr_pp, body]).then(res=>{
+        this.loading = false
+        let img_idx = this.available_images.findIndex(img=>img.id==curr_id)
+        console.log(this.selected_pp.pp_images)
+        try{
+          let next_img = this.available_images[img_idx+1].id
+          this.resetImage(next_img)
+        } catch(err){
+          console.log("todo está completo")
+        }
+
       })
     },
     format(num){
       return d3.format(',')(num)
     },
+    colorStart(simil){
+      let color = d3.scaleSequential(d3.interpolateTurbo)
+        .domain([1.3,0.7])
+      return simil == 0
+        ? '#9C27B0' //purple
+        : color(simil)
+    },
     drawImage(){
       let vm = this
-          
       var svg = d3.select("#imageback")
-        //.attr("viewBox", [0, 0, vm.width, vm.height])
         .attr("viewBox", vm.image_refs.view_box)
-      console.log(svg)
       
-      //let url = vm.current_image.url
       svg.selectAll("#back_image")
         .data([vm.url])
         .join("image")
           .attr('xlink:href', d=> d)
           .attr('width', vm.width)
-          .attr('id', 'back_image')
+          .attr('id', 'back_image');
+      //console.log(vm.rows)
 
-      console.log(vm.rows)
-
+      let start_x = vm.image_refs.divisors[0]
       let squares = svg
         .selectAll("rect")
         .data(vm.rows)
           .join("rect")
             .style("width", vm.width)
             .style("opacity", 0.2)
-            //.style("stroke", 'red')
-            .style("height", d=> d.refs.bot - d.refs.top - 2)
-            //.attr("fill", (d, i) => d3.schemeCategory10[i%10])
+            .style("height", d=> d.bottom - d.top - 2)
             .attr("fill", (d, i) => d.color)
-            .attr("transform", d => `translate(0, ${d.refs.top + 1})`)
+            .attr("transform", d => `translate(${start_x}, ${d.top + 1})`)
             .on("click", vm.updateSelected)
+
+      let symbol = d3.symbol().size(400)
+      let symbols = svg
+        .selectAll("path")
+        .data(vm.rows)
+          .join("path")
+            .style("opacity", d=> d.validated ? 1 : 0.6)
+            .attr("fill", d => vm.colorStart(d.similar_suburb_name))
+            .attr("transform", d => `translate(${start_x - 20}, ${d.top + 20})`)
+            .attr('d', d => symbol.type(d3.symbols[4])())
+            .attr("cursor", 'pointer')
+            //.on("click", vm.updateSelected)
 
       let lines = svg
         .selectAll("lines")
@@ -294,35 +333,12 @@ export default {
       let vm = this
       console.log(row)
       this.current_row = row
-      if (row.final_project){
-        this.fp_data = this.number_cols.reduce((final, amm)=>{
-          return {...final, ...{ [amm.field]: row.final_project[amm.field] }}
-        },{})
-        this.large_texts.forEach(lt=>{
-          //this.fp_data[lt.field] = row.final_project[lt.field]
-          this.$set(this.fp_data, lt.field, row.final_project[lt.field])
-        })
-      }
-      else{
-        this.fp_data = {}
-        let base_raw = row.orphan_data ? row.orphan_data.data : row.raw
-        if (row.orphan_data){
-          this.fp_data = this.number_cols.reduce((final, amm)=>{
-            return {...final, ...{ [amm.field]: base_raw[amm.idx] }}
-          },{})
-        }
-        this.large_texts.forEach(lt=>{
-          if (lt.idx){
-            //this.fp_data[lt.field] = base_raw[lt.idx]
-            this.$set(this.fp_data, lt.field, base_raw[lt.idx])
-          }
-        })
-      }
+      this.fp_data = {...{}, ...row}
 
       let divs = this.image_refs.divisors
 
-      let y0 = row.refs.top - 10
-      let y1 = row.refs.bot - row.refs.top + 20
+      let y0 = row.top - 10
+      let y1 = row.bottom - row.top + 20
       
       let buildViewBox = (ref) => (
         [ divs[ref.idx0] - 20, y0, divs[ref.idx1] - divs[ref.idx0] + 40, y1])
@@ -354,25 +370,30 @@ export default {
               let parent = d3.select(this.parentNode).datum()
               return divs[parent.idx0 + i +1 ] - divs[parent.idx0 + i ] - 4
             })
-            .style("height", row.refs.bot - row.refs.top)
+            .style("height", row.bottom - row.top)
             .attr("fill", function(d){
               let parent = d3.select(this.parentNode).datum()
-              if (parent.idx0 && (row.final_project || row.orphan_data )){
-                let errors = row.final_project
-                  ? row.final_project.data_raw.errors
-                  : row.orphan_data.errors
-                if (errors.some(err=> err.includes(d.text)))
+              if (parent.idx0 && ( row.final_project )){
+                if (row.errors.some(err=> err.includes(d.text)))
                   return '#FFC107' //amber
               }
               if (d.idx)
                 return '#CDDC39' //lime
-              else
+              else{
+                if (row.final_project_obj){
+                  if (row.final_project_obj.rows_count == 1)
+                    return '#CDDC39' //lime
+                  else 
+                    return row.color
+                }
+
                 return row.color
+              }
             })
             .attr("opacity", 0.15)
             .attr("transform", function(d, i){
               let parent = d3.select(this.parentNode).datum()
-              return `translate(${divs[i+parent.idx0] - 2},${row.refs.top})`
+              return `translate(${divs[i+parent.idx0] - 2},${row.top})`
             })
     },
     addSpace(orient){
@@ -393,10 +414,15 @@ export default {
     addText(orient, field){
       const suma = orient == 'up' ?  1 : -1
       const ref_idx = this.current_row[`idx_${orient}`]
-      const table_data = this.current_image.image.table_data[ref_idx]
+      //const table_data = this.current_image.image.table_data[ref_idx]
+      //const table_data = this.current_row.formatted_data
+      const table_data = this.rows[ref_idx].formatted_data
+      console.log(table_data)
+      if (!table_data.length)
+        return
       this.large_texts.forEach(txt=>{
         if (txt.idx){
-          this.fp_data[txt.field] = suma
+          this.fp_data[txt.field] = suma == 1
             ? `${this.fp_data[txt.field]} ${table_data[txt.idx]}`
             : `${table_data[txt.idx]} ${this.fp_data[txt.field]}` 
         }
@@ -445,31 +471,59 @@ export default {
         </template>
       </v-select>
       <v-spacer></v-spacer>
-      <v-btn 
-        v-for="img_id in special_images"
-        color="accent"
-        small
-        class="px-2 mr-1"
-        @click="resetImage(img_id)"
-      >{{img_id}}</v-btn>
-      <v-btn color="accent" @click="resetImage()">Recargar</v-btn>
+      <template v-if="false">
+        <v-btn 
+          v-for="img_id in special_images"
+          color="accent"
+          small
+          class="px-2 mr-1"
+          @click="resetImage(img_id)"
+        >{{img_id}}</v-btn>
+        <v-btn color="accent" @click="resetImage()">Recargar</v-btn>
+      </template>
     </v-card-title>
     <v-card-text>
       <v-row v-if="selected_pp" align="center">
-        Páginas:
-        <v-chip 
-          v-for="img in available_images"
-          :key="img.id"
-          class="ml-2 mb-2"
-          :color="img.color"
-          :outlined="current_image ? current_image.image.id != img.id : true"
-          dark
-          @click="resetImage(img.id)"
-        >{{img.path.substr(-6,2)}}</v-chip>
+        <v-col cols="auto" class="pt-0 grow">
+          Páginas:
+          <v-chip 
+            v-for="img in available_images"
+            :key="img.id"
+            class="ml-2 mb-2"
+            :color="img.color"
+            :outlined="current_image ? current_image.image.id != img.id : true"
+            dark
+            @click="resetImage(img.id)"
+          >{{img.path.substr(-6,2)}}</v-chip>
+        </v-col>
+        <v-col cols="auto" class="pt-0 shrink">
+          <v-select
+            v-if="current_image"
+            outlined
+            style="max-width: 200px;"
+            :items="status_pp.filter(st=>st.validated !== undefined)"
+            v-model="current_image.image.validated"
+            item-value="validated"
+            item-text="text"
+            @change="saveImage"
+            label="Status de página"
+          >          
+            <template v-slot:selection="{ item } ">
+              <span :class="`${item.color}--text`">
+                {{ item.text }}
+              </span>
+            </template>
+            <template v-slot:item="{ item } ">
+              <span :class="`${item.color}--text`">
+                {{ item.text }}
+              </span>
+            </template>
+          </v-select>
+        </v-col>
       </v-row>
         
       <svg id="imageback" v-show="current_image"></svg>
-        
+      <v-divider></v-divider>
       <v-row v-show="current_row.color">
         <v-card-title primary-title>
           Colonia seleccionada
@@ -482,8 +536,28 @@ export default {
             @click="changeRow(orient)"
           >
             <v-icon>{{`fa-angle-double-${orient}`}}</v-icon>
-          </v-btn>          
+          </v-btn>
+          <v-spacer></v-spacer>
+            
+          <v-btn
+            v-for="option in status_pp.filter(x=>x.validated!==null && x.validated!==undefined)"
+            :color="option.color"
+            class="ml-12"
+            :loading="loading"
+            :key="option.text"
+            _class="`${option.color}--text`"
+            @click="saveRow(option)"
+          >
+            Guardar {{ option.text }}
+          </v-btn>
         </v-card-title>
+        <v-col cols="12" v-if="current_row.errors">
+          <v-alert
+            type="error"
+            v-for="error in current_row.errors.filter(err=> 
+              !err.includes('converir'))"
+          >{{error}}</v-alert>
+        </v-col>
         <v-col cols="12">
           <svg class="selected-image"></svg>
           <div class="float-left mt-n7 ml-10">
@@ -506,17 +580,32 @@ export default {
           <template v-if="lt.field == 'suburb'">
             <v-select
               :items="custom_remain"
-              v-model="fp_data.suburb"
-              item-value="suburb"
+              v-model="fp_data.final_project"
+              item-value="id"
               item-text="suburb_name"
               outlined
               label="Colonia coincidente"
-            ></v-select>
+            >
+              <template v-slot:item="{ item }">
+                <b>{{item.rows_count}}</b>
+                <v-icon 
+                  v-if="item.rows_count !== 1"
+                  color="warning"
+                >fa-exclamation</v-icon>
+                <span class="mx-2">{{item.suburb_name}}</span>
+                <span class="grey--text">({{item.suburb_cve_col}})</span>
+              </template>
+              <template v-slot:selection="{ item }">
+                <span v-if="item.rows_count !== 1" class="mr-2">
+                  <b>{{item.rows_count}}</b>
+                  <v-icon 
+                    color="warning"
+                  >fa-exclamation</v-icon>
+                </span>
+                <span>{{item.suburb_name}}</span>
+              </template>
+            </v-select>
             {{selectedSuburb}}
-            <v-checkbox 
-              label="Mostrar todas las colonias" 
-              v-model="show_all_subs"
-            ></v-checkbox>
           </template>
           <template v-else>
             <v-textarea 
@@ -555,7 +644,7 @@ export default {
           ></v-text-field>
           <template v-if="num.is_perc">
             <v-chip @click="fp_data[num.field] = 0">0.0</v-chip>
-            <v-chip @click="fp_data[num.field] = 100.0">100</v-chip>
+            <v-chip @click="fp_data[num.field] = 1.000">100</v-chip>
           </template>
           <template v-for="amm in available_ammounts">
             <v-chip 
@@ -565,7 +654,7 @@ export default {
             >{{ format(amm) }}</v-chip>
           </template>
         </v-col>
-        <v-col cols="12">
+        <v-col cols="12" v-if="false">
           <v-textarea
             name="comments"
             hide-details
@@ -575,13 +664,8 @@ export default {
             outlined
           ></v-textarea>
         </v-col>
-
       </v-row>
       
     </v-card-text>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="success" :loading="loading" @click="saveNext">Guardar referencias</v-btn>
-    </v-card-actions>
   </v-card>
 </template>

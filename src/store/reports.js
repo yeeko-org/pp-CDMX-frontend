@@ -62,8 +62,8 @@ export const getters = {
 export const mutations = {
   SET_CATS(state, data){
     state.suburbs = data.suburb
-    state.townhalls = data.townhall.sort((x, y)=>
-        d3.descending(x.name, y.name))
+    state.townhalls = data.townhall.slice().sort((x, y)=>
+        d3.ascending(x.short_name, y.short_name))
     state.suburb_types = data.suburb_type
     state.periods = data.period
     state.categories = data.categories.map((cat,idx)=>{
@@ -104,6 +104,20 @@ export const mutations = {
     state.public_accounts = public_accounts
     if (!state.curr_pa_idx)
       state.curr_pa_idx = public_accounts.findIndex(pa => !pa.match_review)
+  },
+  UPDATE_IMAGE(state, [img_data, pp_id]){
+    let pp_idx = state.public_accounts.findIndex(pa=> pa.id == pp_id)
+    console.log(state.public_accounts[pp_idx])
+    let pp_images = state.public_accounts[pp_idx].pp_images
+    console.log(pp_images)
+    let img_idx = pp_images.findIndex(img=> img_data.id==img.id)
+    pp_images.splice(img_idx, 1, img_data)
+    console.log(pp_images)
+    //state.public_accounts[.splice(pp_idx, 1, pp_images)
+    state.public_accounts[pp_idx].pp_images =  pp_images
+    console.log(state.public_accounts[pp_idx])
+    //console.log(state.public_accounts[pp_idx].pp_images[img_idx])
+
   },
   SET_PA_IN_REVIEW(state, public_account){
     state.pa_in_review = public_account
@@ -182,6 +196,24 @@ export const actions = {
         //commit("SET_FINAL_PROJECTS", data)
         return resolve(data)
       })
+    })
+  },
+  PUT_ROW({commit}, curr_data){
+    return new Promise (resolve => {
+      this.$axios.put(`/public_account/row/${curr_data.id}/`, curr_data)
+        .then(({data})=>{
+          //commit("SET_FINAL_PROJECTS", data)
+          return resolve(data)
+        })
+    })
+  },
+  PUT_IMAGE({commit}, [img_id, pp_id,curr_data]){
+    return new Promise (resolve => {
+      this.$axios.put(`/public_account/image/${img_id}/`, curr_data)
+        .then(({data})=>{
+          commit("UPDATE_IMAGE", [data, pp_id])
+          return resolve(data)
+        })
     })
   },
   FETCH_PUBLIC_ACCOUNTS({commit}, params){

@@ -19,7 +19,7 @@ export default {
       show_map: false,
       suburbs_arr: undefined,
       complete_arr: undefined,
-      tab: undefined,
+      tab: 0,
       budgets: [
         { name: 'Aprobado', key_name: 'approved'},
         { name: 'Modificado', key_name: 'modified'},
@@ -108,8 +108,17 @@ export default {
     final_projects(){
       if (!this.selected_suburb)
         return []
-      return this.selected_suburb.final_projects
+      let fps = this.selected_suburb.final_projects
         .slice().sort((a,b)=> d3.descending(a.year, b.year))
+      return fps.map(fp=>{
+        try{
+          return {...fp, ...fp.rows[0]}
+        }
+        catch(err){
+          console.log(err)
+          return fp
+        }
+      })
 
     },
     is_vertical(){
@@ -333,13 +342,13 @@ export default {
                     Nombre del proyecto:
                     <br>
                     <span class="text-subtitle-1 black--text font-weight-bold">
-                      {{fp.final_name  || 'Desconocido'}}
+                      {{fp.project_name  || 'Desconocido'}}
                     </span>
                     <br>
                     Descripción:
                     <br>
                     <span class="text-subtitle-2 black--text font-weight-regular">
-                      {{fp.description_cp  || 'Sin descriptión'}}
+                      {{fp.description  || 'Sin descriptión'}}
                     </span>
                     
                     <v-row class="mt-3">
@@ -411,7 +420,7 @@ export default {
                           </v-expansion-panel>
                         </v-expansion-panels>              
                       </v-col>
-                      <v-col cols="12" v-if="fp.anomalies.length">
+                      <v-col cols="12" v-if="fp.anomalies.length && false">
                         <v-icon color="purple" class="mx-2" v-if="false">fa-question-circle</v-icon>
                         Anomalías encontradas:
                         <br>
