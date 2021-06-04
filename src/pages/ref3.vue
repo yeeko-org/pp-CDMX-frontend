@@ -49,7 +49,7 @@ export default {
           validated: false,
         },
         {
-          color: 'lime',
+          color: 'light-green',
           icon: 'fa-folder-open',
           text: 'Incompleto',
           name: 'incomplete'
@@ -92,6 +92,8 @@ export default {
       .slice().sort((a,b)=> d3.ascending(a.townhall, b.townhall))
     },
     available_images(){
+      if (!this.selected_pp)
+        return []
       return this.selected_pp.pp_images.map(img=>(
         {...img, ...this.status_pp.find(st=>st.validated === img.validated)}))
           .slice().sort((a,b)=> d3.ascending(a.path, b.path))
@@ -125,12 +127,12 @@ export default {
                 ? '#FFC107' //amber
                 : double_row
                   ? '#673AB7' //deep-purple
-                  : '#CDDC39' //lime
+                  : '#8BC34A' //ligth-green
               : has_first_col
                 ? "#9C27B0" //purple
                 : "#9E9E9E" //grey
         let need_review = row.validated === null
-          ? has_errors || double_row || (!row.final_project && has_first_col)
+          ? double_row || (has_first_col && (!row.final_project || has_errors))
           : !row.validated
         let complement_row = { 
           final_project_obj: final_proj,
@@ -148,12 +150,13 @@ export default {
       if (!this.current_image || !this.rows.length)
         return {}
       let divs = this.current_image.image.table_ref_columns
-      let start_y = (this.rows[0].top || 340) - 100
+      let start_y = (this.rows[0].top || 340)
       let end_y = this.rows[this.rows.length - 1].bottom || this.height
       return { 
-        divisors: divs,
-        view_box: [(divs[0] - 40) || 0, start_y,
-                  divs[8] - divs[0] + 40, end_y - start_y]
+        divs: divs,
+        y: [start_y, end_y],
+        view_box: [(divs[0] - 40) || 0, start_y - 20,
+                  divs[8] - divs[0] + 60, end_y - start_y + 30]
       }
     },
     available_ammounts(){
@@ -190,13 +193,29 @@ export default {
         return false
       }
     },
+    errors(){
+      if (!this.current_row.errors) return []
+      let columns = []
+      return this.current_row.errors.reduce((arr, err)=>{
+        let col_text = err.substr(err.indexOf("columna"), 18)
+        if (!columns.includes(col_text) && !err.includes('Value')){
+          columns.push(col_text)
+          return [...arr, err]
+        }
+        return arr
+      },[])
+    }
   },
   watch:{
     selected_pp(after){
       this.toBlank()
       const av_imgs = this.available_images
-      let next_img = av_imgs.find(img => !img.validated) || av_imgs[0]
-      this.resetImage(next_img.id)
+      try{
+        let next_img = av_imgs.find(img => !img.validated) || av_imgs[0]
+        this.resetImage(next_img.id)
+      } catch(err){
+        console.log(err)
+      }
     }
   },
   methods:{
@@ -284,20 +303,22 @@ export default {
           .attr('width', vm.width)
           .attr('id', 'back_image');
 
-      let start_x = vm.image_refs.divisors[0]
+      let start_x = vm.image_refs.divs[0]
+      let end_x = vm.image_refs.divs[8]
+
       let squares = svg
         .selectAll("rect")
         .data(vm.rows)
           .join("rect")
-            .style("width", vm.width)
+            .style("width", end_x - start_x)
             .attr("id", 'rect-color')
-            .style("height", d=> d.bottom - d.top - 2)
+            .style("height", d=> d.bottom - d.top)
             .attr("fill", (d, i) => d.color)
             .style("fill-opacity", 0.2)
-            .attr("stroke", 'red')
-            .attr("stroke-width", 0)
+            .attr("stroke", '#304FFE')
+            .attr("stroke-width", 0.5)
             .attr("stroke-opacity", 0.8)
-            .attr("transform", d => `translate(${start_x}, ${d.top + 1})`)
+            .attr("transform", d => `translate(${start_x}, ${d.top})`)
             .on("click", vm.updateSelected)
 
       let symbol = d3.symbol().size(400)
@@ -313,25 +334,21 @@ export default {
 
       let lines = svg
         .selectAll("lines")
-        .data(vm.image_refs.divisors)
+        .data(vm.image_refs.divs)
           .join("rect")
             .style("width", 1)
-            .style("height", vm.height)
-            .attr("fill", '#249bda')
-            .attr("transform", d => `translate(${d},0)`)
+            .style("height", vm.image_refs.y[1] - vm.image_refs.y[0])
+            .attr("fill", '#304FFE')
+            .attr("transform", d => `translate(${d},${vm.image_refs.y[0]})`)
     },
     updateSelected(row){
       console.log(row)
       if (!row) return
-      console.log("hoal")
       this.current_row = row
       let vm = this
       this.fp_data = {...{}, ...row}
 
-      this.$vuetify.goTo("#bottom_page",
-        {duration: 400, offset: 20, easing:'easeInOutCubic'})
-
-      let divs = this.image_refs.divisors
+      let divs = this.image_refs.divs
       let y0 = row.top - 10
       let y1 = row.bottom - row.top + 20
       
@@ -350,7 +367,13 @@ export default {
           if (d.id == row.id)
             return "4"
           else
-            return "0"
+            return "0.5"
+        })
+        .attr("stroke", d=> {
+          if (d.id == row.id)
+            return "red"
+          else
+            return "#304FFE"
         })
 
       var svg_images = d3.selectAll(".selected-image")
@@ -380,7 +403,7 @@ export default {
                     if (row.errors.some(err=> err.includes(p.text)))
                       return '#FFC107' //amber
                   if (p.idx)
-                    return '#CDDC39' //lime
+                    return '#8BC34A' //ligth-green
                   else if (row.final_project_obj){
                     return vm.colorStart(row.similar_suburb_name)
                   }
@@ -389,6 +412,11 @@ export default {
             })
             .style("height", row.bottom - row.top)
             .attr("opacity", 0.15)
+
+      this.$nextTick(()=>{
+        this.$vuetify.goTo("#bottom_page2",
+          {duration: 600, offset: 30, easing:'easeInOutCubic'})
+      })
     },
     addSpace(orient){
       let up = orient == 'up'
@@ -408,6 +436,8 @@ export default {
     addText(orient, field){
       const suma = orient == 'up' ? 1 : -1
       const ref_idx = this.current_row[`idx_${orient}`]
+      if (!this.rows[ref_idx])
+        return
       const table_data = this.rows[ref_idx].formatted_data
       if (!table_data.length)
         table_data = this.rows[ref_idx].vision_data
@@ -505,7 +535,9 @@ export default {
         <svg id="imageback" v-show="current_image"></svg>
         <v-divider></v-divider>
       </v-col>
+      <div id="bottom_page3"></div>
       <v-col cols="12" xl="5" v-show="current_row.color">
+        <div id="bottom_page2"></div>
         <v-card-title primary-title>
           Colonia seleccionada
           <v-spacer></v-spacer>
@@ -543,11 +575,11 @@ export default {
           </v-btn>
         </v-card-title>
         <v-row>
-          <v-col cols="12" v-if="current_row.errors">
-            <v-alert
-              type="error"
-              v-for="error in current_row.errors.filter(err=> 
-                !err.includes('converir'))"
+          <v-col v-for="error in errors" cols="6">
+            <v-alert 
+              :type="error.includes('columna') && !error.includes('anormal')
+                ? 'error' : 'warning'"
+              class="mx-3"
             >{{error}}</v-alert>
           </v-col>
           <v-col cols="12">
