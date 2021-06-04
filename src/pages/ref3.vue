@@ -6,7 +6,6 @@ import * as d3 from 'd3';
 export default {
   name: 'References3',
   layout: 'diamonds',
-  components: {  },  
   data () {
     return {
       width: 2200,
@@ -236,8 +235,7 @@ export default {
           this.$nextTick(()=>{
             let next_row = this.rows.find((rw, idx)=>
               rw.need_review && idx >= next_idx)
-            if (next_row)
-              this.updateSelected(next_row)
+            this.updateSelected(next_row)
           })
       })
     },
@@ -323,11 +321,14 @@ export default {
             .attr("transform", d => `translate(${d},0)`)
     },
     updateSelected(row){
+      console.log(row)
+      if (!row) return
+      console.log("hoal")
       this.current_row = row
       let vm = this
       this.fp_data = {...{}, ...row}
 
-      this.$vuetify.goTo(500,
+      this.$vuetify.goTo("#bottom_page",
         {duration: 400, offset: 20, easing:'easeInOutCubic'})
 
       let divs = this.image_refs.divisors
@@ -364,34 +365,27 @@ export default {
           .attr('width', vm.width)
           .attr('id', 'back_image2')
 
-      /*.each( function(p){
-        const current_color = colorCircles(y_overprice(p.overprice))
-        d4.select(this)
-          .attr("stroke", d=> current_color)
-          .style("fill", d=> current_color)
-      })*/
-
       let square1 = svg_images
         .selectAll("rect")
         .data(d=>d.fields)
           .join("rect")
             .each(function(p, j){
               let parent = d3.select(this.parentNode).datum()
-              let p_idx0 = parent.idx0
+              let curr_idx = parent.idx0 + j 
               d3.select(this)
-              .style("width", divs[p_idx0 + j + 1 ] - divs[p_idx0 + j ] - 4)
-              .attr("transform", `translate(${divs[j+p_idx0] - 2},${row.top})`)
-              .attr("fill", ()=> {
-                if (p_idx0 && (row.final_project))
-                  if (row.errors.some(err=> err.includes(p.text)))
-                    return '#FFC107' //amber
-                if (p.idx)
-                  return '#CDDC39' //lime
-                else if (row.final_project_obj)
-                  if (row.final_project_obj.rows_count == 1)
+                .style("width", divs[curr_idx + 1 ] - divs[curr_idx] - 4)
+                .attr("transform", `translate(${divs[curr_idx] - 2},${row.top})`)
+                .attr("fill", (d)=> {
+                  if (parent.idx0 && (row.final_project))
+                    if (row.errors.some(err=> err.includes(p.text)))
+                      return '#FFC107' //amber
+                  if (p.idx)
                     return '#CDDC39' //lime
-                return row.color
-              })
+                  else if (row.final_project_obj){
+                    return vm.colorStart(row.similar_suburb_name)
+                  }
+                  return row.color
+                })
             })
             .style("height", row.bottom - row.top)
             .attr("opacity", 0.15)
@@ -403,7 +397,7 @@ export default {
         .attr("viewBox", function(d){
           try{
             let current_vb =  d3.select(this).attr("viewBox").split(',')
-            current_vb[1] = parseInt(current_vb[1]) - (up ?  50 : 0 )
+            current_vb[1] = parseInt(current_vb[1]) - (up ? 50 : 0 )
             current_vb[3] = parseInt(current_vb[3]) + 50
             return current_vb
           }catch(err){
@@ -412,12 +406,9 @@ export default {
         })
     },
     addText(orient, field){
-      const suma = orient == 'up' ?  1 : -1
+      const suma = orient == 'up' ? 1 : -1
       const ref_idx = this.current_row[`idx_${orient}`]
-      //const table_data = this.current_image.image.table_data[ref_idx]
-      //const table_data = this.current_row.formatted_data
       const table_data = this.rows[ref_idx].formatted_data
-      console.log(table_data)
       if (!table_data.length)
         table_data = this.rows[ref_idx].vision_data
       this.large_texts.forEach(txt=>{
@@ -431,12 +422,9 @@ export default {
     },
     changeRow(direction){
       const suma = direction == 'left' ? -1 : 1
-      let new_row = this.rows[this.current_row.idx_tb+suma]
-      if (new_row)
-        this.updateSelected(new_row)
+      this.updateSelected(this.rows[this.current_row.idx_tb + suma])
     },
   },
-
 }
 </script>
 
@@ -518,7 +506,6 @@ export default {
         <v-divider></v-divider>
       </v-col>
       <v-col cols="12" xl="5" v-show="current_row.color">
-
         <v-card-title primary-title>
           Colonia seleccionada
           <v-spacer></v-spacer>
@@ -532,7 +519,6 @@ export default {
             <v-icon>{{`fa-angle-double-${orient}`}}</v-icon>
           </v-btn>
           <v-spacer></v-spacer>
-            
           <v-btn
             v-for="option in status_pp.filter(x=>x.calif_row)"
             :color="option.color"
@@ -557,7 +543,6 @@ export default {
           </v-btn>
         </v-card-title>
         <v-row>
-
           <v-col cols="12" v-if="current_row.errors">
             <v-alert
               type="error"
@@ -666,5 +651,6 @@ export default {
         </v-row>
       </v-col>
     </v-row>
+    <div id="bottom_page"></div>
   </v-card>
 </template>
