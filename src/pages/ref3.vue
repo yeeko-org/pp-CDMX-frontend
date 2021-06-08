@@ -124,28 +124,43 @@ export default {
         try{
           double_row = final_proj.rows_count > 1
         }catch(err){}
-        let color = row.validated === false
-          //? '#F44336' //red
           //? '#E91E63' //pink
+          //? '#FFC107' //amber
+          //? '#FF9800' //orange
+          //: "#E0E0E0" //grey
+          //? '#F44336' //red
+          //? '#4CAF50' //green
+          //? '#CDDC39' //lime
+        /*let color = row.validated === false
           ? '#D81B60' //pink2
           : row.validated === true 
-            //? '#4CAF50' //green
             ? '#009688' //teal
             : row.final_project
               ? has_errors
-                //? '#FFC107' //amber
-                //? '#FF9800' //orange
-                //? '#F44336' //red
                 ? '#FF5722' //deep-orange
                 : double_row
                   ? '#673AB7' //deep-purple
                   : has_warnings
                     ? '#FF9800' //orange
-                    //? '#CDDC39' //lime
                     : '#8BC34A' //ligth-green
               : has_first_col
                 ? "#673AB7" //deep-purple
-                //: "#E0E0E0" //grey
+                : "#9E9E9E" //grey*/
+
+        let color = row.validated === false
+          ? '#D81B60' //pink2
+          : row.validated === true 
+            ? '#009688' //teal
+            : row.final_project
+              ? double_row
+                ? '#673AB7' //deep-purple
+                : has_errors
+                  ? '#FF5722' //deep-orange
+                    : has_warnings
+                      ? '#FF9800' //orange
+                      : '#8BC34A' //ligth-green
+              : has_first_col
+                ? "#673AB7" //deep-purple
                 : "#9E9E9E" //grey
         let need_review = row.validated === null
           ? double_row || (has_first_col && (!row.final_project || has_errors))
