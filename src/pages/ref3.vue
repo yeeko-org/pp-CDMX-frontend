@@ -107,7 +107,13 @@ export default {
       let final_rows = all_rows.map((row, idx)=>{
         let final_proj = curr_img.final_projects.find(fp=>
           fp.id == row.final_project)
-        let has_errors = row.errors.some(err => !err.includes('Variación'))
+        const relev_errors = row.errors.filter(err=> !err.includes('Variación'))
+        let has_warnings = relev_errors.some(err => 
+           err.includes('anormal') || !err.includes('columna'))
+        let has_errors = relev_errors.some(err => 
+          err.includes('columna') && !err.includes('anormal'))
+        
+
         let has_first_col = false 
         try{
           has_first_col = !!row.formatted_data[0]
@@ -119,17 +125,27 @@ export default {
           double_row = final_proj.rows_count > 1
         }catch(err){}
         let color = row.validated === false
-          ? '#F44336' //red
+          //? '#F44336' //red
+          //? '#E91E63' //pink
+          ? '#D81B60' //pink2
           : row.validated === true 
-            ? '#4CAF50' //green
+            //? '#4CAF50' //green
+            ? '#009688' //teal
             : row.final_project
               ? has_errors
-                ? '#FFC107' //amber
+                //? '#FFC107' //amber
+                //? '#FF9800' //orange
+                //? '#F44336' //red
+                ? '#FF5722' //deep-orange
                 : double_row
                   ? '#673AB7' //deep-purple
-                  : '#8BC34A' //ligth-green
+                  : has_warnings
+                    ? '#FF9800' //orange
+                    //? '#CDDC39' //lime
+                    : '#8BC34A' //ligth-green
               : has_first_col
-                ? "#9C27B0" //purple
+                ? "#673AB7" //deep-purple
+                //: "#E0E0E0" //grey
                 : "#9E9E9E" //grey
         let need_review = row.validated === null
           ? double_row || (has_first_col && (!row.final_project || has_errors))
