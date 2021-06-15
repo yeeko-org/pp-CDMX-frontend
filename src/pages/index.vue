@@ -1,6 +1,7 @@
 <script>
 import AutoComplete from "~/components/common/AutoComplete";
 import MapCDMX from "~/components/map/MapCDMX";
+import DataViz from "~/components/map/DataViz";
 import MainHeader from "~/components/home/MainHeader";
 import ppMixin from "~/mixins/ppMixin";
 import { mapState, mapActions } from "vuex";
@@ -8,7 +9,7 @@ import * as d3 from 'd3';
 
 export default {
   name: 'MappingHolder',
-  components: { AutoComplete, MapCDMX, MainHeader},
+  components: { AutoComplete, MapCDMX, MainHeader, DataViz},
   mixins: [ppMixin],
   data(){
     return {
@@ -522,11 +523,7 @@ export default {
     </v-card>
     <MapCDMX v-if="show_map" id="map"/>
     <v-card id="viz" class="ma-2 px-4 text-center">
-        <v-icon class="mt-4" large>fa-chart-bar</v-icon> 
-      <v-card-text class="text-subtitle-1">
-        Visualización en Construcción. Proximamente disponible
-        <v-icon>fa-laptop-code</v-icon>
-      </v-card-text>
+      <DataViz />
     </v-card>
   </div>
 </template>
