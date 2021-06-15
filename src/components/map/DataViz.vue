@@ -24,7 +24,7 @@ export default {
       ],
       not_fields: ["not_approved", "not_executed", "not_reported"],
       periods:[
-        { id: 0, year: 'mean' },
+        { id: 0, year: 'total' },
         { id: 3, year: 2014 },
         { id: 4, year: 2015 },
         { id: 5, year: 2016 },
@@ -39,7 +39,7 @@ export default {
         {name: 'similar', text: 'similiar', color: '#b4b4b438'},
         {name: 'plus_5', text: 'más de 102.5%', color: '#d9ef8b99'},
       ],
-      mean_th: {id: 0, name: 'Promedio', short_name: 'mean'},
+      mean_th: {id: 0, name: 'Promedio', short_name: 'total'},
       legend: { width: 70, height: 15 },
     }
   },
@@ -89,7 +89,8 @@ export default {
         ({...col, ...{value: this.tt_data[col.name] || 0}}) )
         //`${col.text}: ${this.tt_data[col.name] || 0}` )
       final_obj.ammounts = this.ammounts.map( amm =>
-        `${amm.text}: ${d3.format("($,.2f")(this.tt_data[amm.name])}` )
+        ({...amm, ...{value: d3.format("($,.2f")(this.tt_data[amm.name])}}) )
+        //`${amm.text}: ${d3.format("($,.2f")(this.tt_data[amm.name])}` )
 
       return final_obj
     },
@@ -402,17 +403,19 @@ export default {
         class="pa-3 black--text"
         _style="{'border': `2px ${calcHeatColor(tt_data.perc)} solid`}"
       >
-        <span>{{hydrated_tt.townhall_obj.name_upper}}</span>
-        <span>{{hydrated_tt.period_obj.year}}</span>
-        <div>Colonias según variación:</div>
+        <span class="text-h6">
+          {{hydrated_tt.townhall_obj.name_upper}}
+           {{hydrated_tt.period_obj.year}}
+        </span>
+        <div class="font-weight-bold">Colonias según variación:</div>
         <div v-for="value in hydrated_tt.values">
           <v-icon :color="value.color">fa-square-full</v-icon>
           {{value.text}}: {{value.value}}
         </div>
-        <div>Promedios:</div>
+        <div class="font-weight-bold">Promedios:</div>
         <div v-for="amm in hydrated_tt.ammounts">
-          <v-icon :color="value.color" v-if="false">fa-square-full</v-icon>
-          {{amm}}
+          <v-icon :color="amm.color">fa-grip-lines</v-icon>
+          {{amm.text}}: {{amm.value}}
         </div>
       </div>      
     </v-tooltip>
