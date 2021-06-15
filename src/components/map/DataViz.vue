@@ -411,8 +411,8 @@ export default {
         </div>
         <div>Promedios:</div>
         <div v-for="amm in hydrated_tt.ammounts">
-          <v-icon :color="value.color">fa-square-full</v-icon>
-          {{amm.tex}}
+          <v-icon :color="value.color" v-if="false">fa-square-full</v-icon>
+          {{amm}}
         </div>
       </div>      
     </v-tooltip>
