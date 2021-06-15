@@ -11,6 +11,10 @@ export default {
     return {
       width: 640,
       height: 740,
+      is_tooltip: false,
+      posX: -200,
+      posY: -200,
+      tt_data: undefined,      
       paddings: { left: 50, right: 200, top: 140, bottom: 10 },
       squares: { height: 32, width: 44, padding_x: 0.12, padding_y: 0.08 },
       built: false,
@@ -73,6 +77,20 @@ export default {
     max_th: (vm) => d3Array.rollup(vm.all_th,
         v => d3.max(v, d => d3.max(vm.ammount_names.map(amm=>d[amm]))) * 1.1,
         d => d.townhall) ,
+    hydrated_tt(){
+      if (!this.tt_data)
+        return null
+      let final_obj = {}
+      final_obj.townhall_obj = this.townhalls.find(th=> 
+        th.id == this.tt_data.townhall)
+      final_obj.period_obj = this.periods.find(period=> 
+        period.id == this.tt_data.period_pp)
+      final_obj.values = this.columns.map( col =>
+        `${col.text}: ${this.tt_data[col.name]}` )
+      final_obj.ammounts = this.ammounts.map( amm =>
+        `${amm.text}: ${this.tt_data[amm.name]}` )
+      return final_obj
+    },
   },
   created(){
     this.fetchCatalogs().then(cats=>{
@@ -103,6 +121,10 @@ export default {
     },
     build_map(){
       var vm = this
+
+      console.log(vm.all_th)
+      console.log(vm.grouped_years_arr)
+
       if (!vm.public_accounts || !vm.hered_townhalls || vm.built)
         return
       this.built = true
@@ -198,6 +220,11 @@ export default {
           .attr("width", d => x(d[1]) - x(d[0]))
           .attr("height", yScale.bandwidth())
 
+
+
+
+
+
       var townhalls = years
         .selectAll(".clicklable")
         .data(d => d)
@@ -223,13 +250,54 @@ export default {
                 .attr('height', extent[0].y - extent[1].y)
 
             d3.select(this)
-              .selectAll('#draws')
+              .append("rect")
+                .call(common_rects)
+                .attr("fill", "transparent")
+                .attr('y', 0)
+                .attr('height', vm.squares.height)
+                .attr('class', 'simple')
+                .on("mousemove", function(d) {
+                  vm.is_tooltip = true
+                  vm.posX = d3.event.clientX
+                  vm.posY = d3.event.clientY
+                })
+                .on("mouseover", function(d) {
+                  vm.is_tooltip = true
+                  let parent = d3.select(this.parentNode).datum()
+                  vm.tt_data = parent
+                  /*var h = d.parent.children.find(x=>x.data.sex == 'hombre').value
+                  var m = d.parent.children.find(x=>x.data.sex == 'mujer').value
+                  vm.tt_data = {
+                    segmento : d.data.segmento,
+                    nombre : d.data.segmento.nombre,
+                    description : d.data.segmento.descripcion,
+                    total_segmento : d.parent.value,
+                    h: h,
+                    m: m,
+                    perc: m/(h+m),
+                    seg: vm.format_perc(d.parent.value *100 / d.parent.parent.value),
+                    seg_tot: d3.format(",")(d.parent.value),
+                    g_seg_name: gs.grupo_segmento.nombre,
+                  }*/
+                })
+                .on("mouseout", function(d) {
+                  vm.is_tooltip = false
+                })
+
+
+
+
+
+            d3.select(this)
+              .selectAll('.draws')
               .data(amms)
               .join("rect")
                 .call(common_rects)
                 .attr("fill", q => q.color)
                 .attr('y', q => q.y)
                 .attr('height', 1.2)
+                .attr('class', 'draws')
+
 
             /*d3.select(this)
               .append("text")
@@ -318,5 +386,31 @@ export default {
       <svg id="DataViz">
       </svg>
     </v-card-text>
+
+    <v-tooltip 
+      _color="white"
+      bottom 
+      v-model="is_tooltip"
+      :position-x="posX"
+      :position-y="posY"
+    >
+      <div
+        v-if="tt_data"
+        class="pa-3"
+        _style="{'border': `2px ${calcHeatColor(tt_data.perc)} solid`}"
+      >
+        <span>{{hydrated_tt.townhall_obj.name_upper}}</span>
+        <span>{{hydrated_tt.period_obj.year}}</span>
+        <div>VALORES:</div>
+        <div v-for="value in hydrated_tt.values">
+          {{value}}
+        </div>
+        <div>PROMEDIOS:</div>
+        <div v-for="amm in hydrated_tt.ammounts">
+          {{amm}}
+        </div>
+      </div>      
+    </v-tooltip>
+
   </v-card>
 </template>
