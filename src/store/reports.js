@@ -160,9 +160,9 @@ export const actions = {
     })
   },
 
-  FETCH_FINAL_PROJECTS({commit}){
+  FETCH_FINAL_PROJECTS({commit}, period){
     return new Promise (resolve => {
-      this.$axios.get('/project/final_project/1/').then(({data})=>{
+      this.$axios.get(`/project/final_project/period/${period}/`).then(({data})=>{
         commit("SET_FINAL_PROJECTS", data)
         return resolve(data)
       })

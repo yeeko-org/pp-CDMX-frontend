@@ -32,6 +32,15 @@ export default {
       initial_scale: 600000,
       access_token: 'pk.eyJ1Ijoicmlja3JlYmVsIiwiYSI6ImNrZDRtM2pkaDE2Mm4ycW8zbjl4NmhqNnkifQ.fXsECn7EtVBuGs9sidf94Q',
       map_style: 'rickrebel/ckdgtap4v0jo21ipev01hvpvw',
+      current_period: 1,
+      periods:[
+        { id: 3, year: 2014 },
+        { id: 4, year: 2015 },
+        { id: 5, year: 2016 },
+        { id: 2, year: 2017 },
+        { id: 1, year: 2018 },
+        { id: 6, year: 2019 },
+      ],      
     }
   },
   computed:{
@@ -89,21 +98,30 @@ export default {
   },
   mounted(){
     //const features = topojson.feature(map_json, map_json.objects.MEX_adm1).features    
-    this.getFinalProjects().then((proys)=>{
-      d3.json("https://cdn-yeeko.s3-us-west-2.amazonaws.com/alcaldias.json")
-        .then(topology => {
-          //console.log(topology)
-          this.limits_th = topojson.feature(topology, topology.objects.alcaldias)
-          this.loaded_data=true
-          this.build_map()
-      })
-    })
+    this.mountedMap(1)
+  },
+  watch:{
+    current_period(after){
+      console.log(after)
+      this.mountedMap(after)
+    }
   },
   methods:{
     ...mapActions({
       getFinalProjects : 'reports/FETCH_FINAL_PROJECTS',
       getSuburb : 'reports/GET_SUBURB',
     }),
+    mountedMap(period_id){
+      this.getFinalProjects(period_id).then((proys)=>{
+        d3.json("https://cdn-yeeko.s3-us-west-2.amazonaws.com/alcaldias.json")
+          .then(topology => {
+            //console.log(topology)
+            this.limits_th = topojson.feature(topology, topology.objects.alcaldias)
+            this.loaded_data=true
+            this.build_map()
+        })
+      })
+    },
     scale_color(val){
       return d3.scaleSequential([0, 1], d3.interpolateCool)(val)
     },
@@ -481,6 +499,18 @@ export default {
             fa-map-marked-alt
           </v-icon>
           <v-select
+            :items="periods"
+            v-model="current_period"
+            label="Año"
+            :class="{'float-right': $breakpoint.is.smAndUp}"
+            class="ml-2"
+            item-text="year"
+            item-value="id"
+            outlined
+            style="max-width: 100px;"
+            @change="zoomFromSelect"
+          ></v-select>
+          <v-select
             :items="townhalls"
             v-model="zoom_townhall"
             label="Selecciona una Alcaldía"
@@ -489,7 +519,7 @@ export default {
             item-value="cve_alc"
             outlined
             clearable
-            style="max-width: 300px;"
+            style="max-width: 250px;"
             @change="zoomFromSelect"
           ></v-select>
           <br>

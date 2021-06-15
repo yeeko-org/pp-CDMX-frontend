@@ -297,8 +297,8 @@ export default {
                       style="justify-content: start;"
                       _change="getProbDetails(prob)"
                     >
-                      {{fp.year}}
-                      <v-icon class="mx-2" small :color="category_winer.color">
+                      <span class="mr-3">{{fp.year}}</span>
+                      <v-icon class="mx-2" small :color="category_winer.color" v-if="false">
                         {{category_winer.icon}}
                       </v-icon>
                       <v-icon color="red" small class="mx-2" v-if="fp.anomalies.length">
@@ -309,10 +309,10 @@ export default {
                     </v-tab>
                   </template>
                   <div>
-                    {{fp.final_name}}
+                    {{fp.project_name}}
                     <br>
                     <v-chip 
-                      v-if="category_winer"
+                      v-if="category_winer && false"
                       outlined
                       _color="category_winer.color"
                       color="white"
@@ -326,16 +326,18 @@ export default {
               <v-tab-item v-for="(fp, index) in final_projects">
                 <v-card outlined tile>
                   <v-card-text class="text-left">
-                    Categoría:
-                    <br>
-                    <v-chip 
-                      v-if="category_winer"
-                      dark
-                      :color="category_winer.color"
-                    >
-                      <v-icon class="mr-2" small>{{category_winer.icon}}</v-icon>
-                      {{category_winer.name}}
-                    </v-chip>
+                    <template v-if="false">
+                      Categoría:
+                      <br>
+                      <v-chip 
+                        v-if="category_winer"
+                        dark
+                        :color="category_winer.color"
+                      >
+                        <v-icon class="mr-2" small>{{category_winer.icon}}</v-icon>
+                        {{category_winer.name}}
+                      </v-chip>
+                    </template>
                     <span 
                       class="float-right text-h6 font-weight-bold primary--text mt-n3"
                     >{{fp.year}}</span>
@@ -406,7 +408,7 @@ export default {
                                   <tbody>
                                     <tr v-for="proj in fp.projects" :key="proj.id">
                                       <td>
-                                        <v-icon color="yellow darken-2" v-if="proj.is_winer">
+                                        <v-icon color="yellow darken-2" v-if="proj.is_winner">
                                           fa-trophy
                                         </v-icon>
                                       </td>
@@ -421,7 +423,7 @@ export default {
                           </v-expansion-panel>
                         </v-expansion-panels>              
                       </v-col>
-                      <v-col cols="12" v-if="fp.anomalies.length && false">
+                      <v-col cols="12" v-if="fp.anomalies.length">
                         <v-icon color="purple" class="mx-2" v-if="false">fa-question-circle</v-icon>
                         Anomalías encontradas:
                         <br>
