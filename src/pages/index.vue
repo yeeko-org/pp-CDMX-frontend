@@ -439,10 +439,10 @@ export default {
                               dark
                             >
                               <v-icon class="mr-2" small>fa-exclamation-circle</v-icon>
-                              {{anomaly.anomaly.name}}
+                              {{anomaly.name}}
                             </v-chip>
                           </template>
-                          <span>{{anomaly.anomaly.description}}</span>
+                          <span>{{anomaly.description}}</span>
                         </v-tooltip>
                       </v-col>
                     </v-row>

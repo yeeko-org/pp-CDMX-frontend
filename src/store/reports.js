@@ -107,15 +107,15 @@ export const mutations = {
   },
   UPDATE_IMAGE(state, [img_data, pp_id]){
     let pp_idx = state.public_accounts.findIndex(pa=> pa.id == pp_id)
-    console.log(state.public_accounts[pp_idx])
+    //console.log(state.public_accounts[pp_idx])
     let pp_images = state.public_accounts[pp_idx].pp_images
-    console.log(pp_images)
+    //console.log(pp_images)
     let img_idx = pp_images.findIndex(img=> img_data.id==img.id)
     pp_images.splice(img_idx, 1, img_data)
-    console.log(pp_images)
+    //console.log(pp_images)
     //state.public_accounts[.splice(pp_idx, 1, pp_images)
     state.public_accounts[pp_idx].pp_images =  pp_images
-    console.log(state.public_accounts[pp_idx])
+    //console.log(state.public_accounts[pp_idx])
     //console.log(state.public_accounts[pp_idx].pp_images[img_idx])
 
   },
