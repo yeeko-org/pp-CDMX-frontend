@@ -508,7 +508,6 @@ export default {
             item-value="id"
             outlined
             style="max-width: 100px;"
-            @change="zoomFromSelect"
           ></v-select>
           <v-select
             :items="townhalls"

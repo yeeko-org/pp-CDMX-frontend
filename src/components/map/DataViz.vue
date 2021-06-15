@@ -86,9 +86,11 @@ export default {
       final_obj.period_obj = this.periods.find(period=> 
         period.id == this.tt_data.period_pp)
       final_obj.values = this.columns.map( col =>
-        `${col.text}: ${this.tt_data[col.name]}` )
+        ({...col, ...{value: this.tt_data[col.name] || 0}}) )
+        //`${col.text}: ${this.tt_data[col.name] || 0}` )
       final_obj.ammounts = this.ammounts.map( amm =>
-        `${amm.text}: ${this.tt_data[amm.name]}` )
+        `${amm.text}: ${d3.format("($,.2f")(this.tt_data[amm.name])}` )
+
       return final_obj
     },
   },
@@ -388,24 +390,26 @@ export default {
     </v-card-text>
 
     <v-tooltip 
-      _color="white"
+      color="white"
       bottom 
+      class="black--text"
       v-model="is_tooltip"
       :position-x="posX"
       :position-y="posY"
     >
       <div
         v-if="tt_data"
-        class="pa-3"
+        class="pa-3 black--text"
         _style="{'border': `2px ${calcHeatColor(tt_data.perc)} solid`}"
       >
         <span>{{hydrated_tt.townhall_obj.name_upper}}</span>
         <span>{{hydrated_tt.period_obj.year}}</span>
-        <div>VALORES:</div>
+        <div>Colonias según variación:</div>
         <div v-for="value in hydrated_tt.values">
-          {{value}}
+          <v-icon :color="value.color">fa-square-full</v-icon>
+          {{value.text}}: {{value.value}}
         </div>
-        <div>PROMEDIOS:</div>
+        <div>Promedios:</div>
         <div v-for="amm in hydrated_tt.ammounts">
           {{amm}}
         </div>
