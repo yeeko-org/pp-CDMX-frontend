@@ -156,9 +156,9 @@ export default {
                 ? '#673AB7' //deep-purple
                 : has_errors
                   ? '#FF5722' //deep-orange
-                    : has_warnings
-                      ? '#FF9800' //orange
-                      : '#8BC34A' //ligth-green
+                  : has_warnings
+                    ? '#FF9800' //orange
+                    : '#8BC34A' //ligth-green
               : has_first_col
                 ? "#673AB7" //deep-purple
                 : "#9E9E9E" //grey
@@ -172,6 +172,7 @@ export default {
           idx_up: idx+1,
           idx_down: idx-1,
           need_review: need_review,
+          double_row: double_row,
         }
         return {...row, ...complement_row}
       })
@@ -317,10 +318,11 @@ export default {
     format(num){
       return d3.format(',')(num)
     },
-    colorStart(simil){
+    colorStart(row){
       let color = d3.scaleSequential(d3.interpolateTurbo)
         .domain([1.3,0.7])
-      return simil == 0 ? '#9C27B0' : color(simil)
+      let simil = row.similar_suburb_name
+      return (simil == 0 || row.double_row) ? '#9C27B0' : color(simil)
     },
     drawImage(){
       let vm = this
@@ -357,7 +359,7 @@ export default {
         .selectAll("path")
         .data(vm.rows)
           .join("path")
-            .attr("fill", d => vm.colorStart(d.similar_suburb_name))
+            .attr("fill", d => vm.colorStart(d))
             .attr("transform", d => `translate(${start_x - 20}, ${d.top + 20})`)
             .attr('d', d => symbol.type(d3.symbols[4])())
             .attr("cursor", 'pointer')
@@ -436,7 +438,7 @@ export default {
                   if (p.idx)
                     return '#8BC34A' //ligth-green
                   else if (row.final_project_obj){
-                    return vm.colorStart(row.similar_suburb_name)
+                    return vm.colorStart(row)
                   }
                   return row.color
                 })

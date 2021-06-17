@@ -319,7 +319,7 @@ export default {
           .attr("alignment-baseline", "hanging")
           .attr("font-size", "14px")
           .style("text-anchor", "start")
-          .text('Proyectos según proporción entre el monto ejecutado y el asignado')
+          .text('Proyectos según proporción entre el monto ejecutado y el aprobado')
 
       svg.selectAll("mylabels")
         .data(vm.columns)
@@ -383,8 +383,13 @@ export default {
 </script>
 
 <template>
-  <v-card id="viz" class="ma-2 px-4 text-center">
-    <v-icon class="mt-4" large>fa-chart-bar</v-icon> 
+  <v-card id="viz" class="ma-2 text-center">
+    <v-card-title >
+      <v-spacer></v-spacer>    
+      <v-icon class="mr-2" large color="accent">fa-chart-bar</v-icon>
+      <span class="text-h5">Visualización de datos</span>
+      <v-spacer></v-spacer>    
+    </v-card-title>
     <v-card-text class="text-subtitle-1">
       <svg id="DataViz">
       </svg>

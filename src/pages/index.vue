@@ -524,9 +524,7 @@ export default {
       </v-row>
     </v-card>
     <MapCDMX v-if="show_map" id="map"/>
-    <v-card id="viz" class="ma-2 px-4 text-center">
-      <DataViz />
-    </v-card>
+    <DataViz id="viz"/>
   </div>
 </template>
 

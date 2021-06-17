@@ -32,7 +32,7 @@ export default {
       initial_scale: 600000,
       access_token: 'pk.eyJ1Ijoicmlja3JlYmVsIiwiYSI6ImNrZDRtM2pkaDE2Mm4ycW8zbjl4NmhqNnkifQ.fXsECn7EtVBuGs9sidf94Q',
       map_style: 'rickrebel/ckdgtap4v0jo21ipev01hvpvw',
-      current_period: 1,
+      current_period: 6,
       periods:[
         { id: 3, year: 2014 },
         { id: 4, year: 2015 },
@@ -98,7 +98,7 @@ export default {
   },
   mounted(){
     //const features = topojson.feature(map_json, map_json.objects.MEX_adm1).features    
-    this.mountedMap(1)
+    this.mountedMap(6)
   },
   watch:{
     current_period(after){
@@ -498,7 +498,11 @@ export default {
           <v-icon class="ml-3 mb-3" large color="accent">
             fa-map-marked-alt
           </v-icon>
+          <span class="grey--text ml-3">
+            Interactúa con el mapa y sus elementos
+          </span>
           <v-select
+            v-if="false"
             :items="periods"
             v-model="current_period"
             label="Año"
@@ -510,6 +514,7 @@ export default {
             style="max-width: 100px;"
           ></v-select>
           <v-select
+            v-if="false"
             :items="townhalls"
             v-model="zoom_townhall"
             label="Selecciona una Alcaldía"
@@ -522,11 +527,32 @@ export default {
             @change="zoomFromSelect"
           ></v-select>
           <br>
-          <span class="grey--text">
-            Interactúa con el mapa y sus elementos
-          </span>
         </div>
-        <svg id="MapCDMX">
+        <div class="mb-3 mt-n2">
+          <v-chip
+            v-for="period in periods"
+            color="primary"
+            class="ml-2 mt-3"
+            :outlined="period.id != current_period"
+            @click="current_period = period.id"
+          >
+            {{period.year}}
+          </v-chip>
+          <v-select
+            :items="townhalls"
+            v-model="zoom_townhall"
+            label="Selecciona una Alcaldía"
+            :class="{'float-right': $breakpoint.is.smAndUp}"
+            item-text="name"
+            item-value="cve_alc"
+            outlined
+            clearable
+            hide-details
+            style="max-width: 250px;"
+            @change="zoomFromSelect"
+          ></v-select>
+        </div>
+        <svg id="MapCDMX" class="mt-2">
         </svg>
         
         <v-tooltip 
