@@ -2,11 +2,11 @@
 #### Mapa y visualización de datos sobre el presupuesto participativo de la Ciudad de México
 
 ### Backend y API
-La plataforma está asociada al repositorio de backend https://github.com/yeeko-org/pp-CDMX-frontend, de donde se obtienen los datos y la API.
+La plataforma está asociada al repositorio de backend https://github.com/yeeko-org/pp-cdmx, de donde se obtienen los datos y la API.
 
 La API es abierta y es posible consumirla desde https://ppcdmx.yeeko.org/api-rest
 
-La documentación de la API está disponible en: https://github.com/yeeko-org/pp-CDMX-frontend/wiki
+La documentación de la API está disponible en: https://github.com/yeeko-org/pp-cdmx/wiki
 
 ### Para iniciar el proyecto: 
 
