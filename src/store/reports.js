@@ -119,6 +119,11 @@ export const mutations = {
     //console.log(state.public_accounts[pp_idx].pp_images[img_idx])
 
   },
+  UPDATE_PA(state, [status, pa_id]){
+    let pa_idx = state.public_accounts.findIndex(pa=> pa.id == pa_id)
+    //console.log(state.public_accounts[pp_idx])
+    state.public_accounts[pa_idx].status = status
+  },
   SET_PA_IN_REVIEW(state, public_account){
     state.pa_in_review = public_account
   },
@@ -203,6 +208,15 @@ export const actions = {
       this.$axios.put(`/public_account/row/${curr_data.id}/`, curr_data)
         .then(({data})=>{
           //commit("SET_FINAL_PROJECTS", data)
+          return resolve(data)
+        })
+    })
+  },
+  PUT_PA({commit}, [pa_id, curr_data]){
+    return new Promise (resolve => {
+      this.$axios.put(`/public_account/${pa_id}/`, curr_data)
+        .then(({data})=>{
+          commit("UPDATE_PA", [curr_data.status, pa_id])
           return resolve(data)
         })
     })

@@ -283,6 +283,7 @@ export default {
       putImage : 'reports/PUT_IMAGE',
       getImage : 'reports/GET_IMAGE',
       fetchPAs : 'reports/FETCH_PUBLIC_ACCOUNTS',
+      putPA : 'reports/PUT_PA',
     }),
     toBlank(hard_reset=true){
       if (hard_reset)
@@ -314,6 +315,9 @@ export default {
             this.updateSelected(next_row)
           })
       })
+    },
+    changeStatusPA(status){
+      this.putPA([this.selected_pp.id, {status: status.name}])
     },
     saveRow(valid, show_next=false){
       this.fp_data.validated = valid
@@ -577,7 +581,7 @@ export default {
             item-value="name"
             return-object
             v-model="selected_pp.status_obj"
-            _change="fetchPublicAccounts"
+            @change="changeStatusPA"
           >
             <template v-slot:selection="{ item }">
               <v-icon :color="item.color" class="mr-2">

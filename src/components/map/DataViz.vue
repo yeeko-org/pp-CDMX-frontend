@@ -20,7 +20,8 @@ export default {
       built: false,
       ammounts : [
         { name: 'executed_mean', color: '#700174', text: 'ejecutado'},
-        { name: 'approved_mean', color: '#00bcd4', text: 'aprobado' }
+        { name: 'approved_mean', color: '#00bcd4', text: 'aprobado' },
+        { name: 'approved_median', color: 'red', text: 'aprobado med' }
       ],
       not_fields: ["not_approved", "not_executed", "not_reported"],
       periods:[
@@ -36,7 +37,7 @@ export default {
         {name: 'every_not', text: 'no ejecutado', color: '#d73027a0'},
         {name: 'minus_10', text: 'menor a 90%', color: '#fdae6190'},
         {name: 'minus_5', text: '90% - 97.5%', color: '#fee08b90'},
-        {name: 'similar', text: 'similiar', color: '#b4b4b438'},
+        {name: 'similar', text: 'similar', color: '#b4b4b438'},
         {name: 'plus_5', text: 'más de 102.5%', color: '#d9ef8b99'},
       ],
       mean_th: {id: 0, name: 'Promedio', short_name: 'total'},
