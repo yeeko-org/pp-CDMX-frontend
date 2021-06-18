@@ -33,8 +33,8 @@ export default {
       ],
       status_pp: [
         {
-          color: 'green',
-          icon: 'fa-check-double',
+          color: 'light-green',
+          icon: 'fa-check-circle',
           text: 'Completo',
           name: 'complete',
           calif_row: true,
@@ -42,17 +42,11 @@ export default {
         },
         {
           color: 'amber',
-          icon: 'fa-exclamation-triangle',
+          icon: 'fa-exclamation',
           text: 'Con pendientes',
           name: 'warning',
           calif_row: true,
           validated: false,
-        },
-        {
-          color: 'light-green',
-          icon: 'fa-folder-open',
-          text: 'Incompleto',
-          name: 'incomplete'
         },
         {
           color: 'purple',
@@ -60,6 +54,32 @@ export default {
           text: 'Por empezar',
           name: 'pending',
           validated: null,
+        },
+      ],
+      status_verif: [
+        { 
+          color: 'grey',
+          icon: 'fa-question',
+          text: 'Desconocido',
+          name: 'incompleted',
+        },
+        { 
+          color: 'purple',
+          icon: 'fa-exclamation-triangle',
+          text: 'Requiere correcciones',
+          name: 'need_review',
+        },
+        {
+          color: 'light-blue',
+          icon: 'fa-user-edit',
+          name: 'modified',
+          text: 'Corrección completa'
+        },
+        { 
+          color: 'green',
+          icon: 'fa-check-double',
+          text: 'Validado',
+          name: 'validated',
         },
       ],
     }
@@ -84,10 +104,11 @@ export default {
           status_name = 'warning'
         else if (pa.pp_images.every(img=> img.validated === true))
           status_name = 'complete'
-        else if (pa.pp_images.some(img=> img.validated === true))
-          status_name = 'incomplete'
-        let status = this.status_pp.find(st=>st.name == status_name)
-        return ({...pa, ...{ status: status }})
+        //else if (pa.pp_images.some(img=> img.validated === true))
+          //status_name = 'incomplete'
+        let status_calc = this.status_pp.find(st=>st.name == status_name)
+        let status = this.status_verif.find(st=>st.name == pa.status)
+        return { ...pa, ...{status_calc: status_calc}, ...{status_obj: status} }
       })
       .slice().sort((a,b)=> d3.ascending(a.townhall, b.townhall))
     },
@@ -110,9 +131,13 @@ export default {
         const relev_errors = row.errors.filter(err=> !err.includes('Variación'))
         let has_warnings = relev_errors.some(err => 
            err.includes('anormal') || !err.includes('columna'))
+        let without_some_text = false
+        if (!row.project_name || !row.description){
+          row.errors = [...row.errors, "No se registró alguna columna de texto"]
+          without_some_text = true
+        }
         let has_errors = relev_errors.some(err => 
           err.includes('columna') && !err.includes('anormal'))
-        
 
         let has_first_col = false 
         try{
@@ -156,7 +181,7 @@ export default {
                 ? '#673AB7' //deep-purple
                 : has_errors
                   ? '#FF5722' //deep-orange
-                  : has_warnings
+                  : (has_warnings || without_some_text)
                     ? '#FF9800' //orange
                     : '#8BC34A' //ligth-green
               : has_first_col
@@ -322,7 +347,16 @@ export default {
       let color = d3.scaleSequential(d3.interpolateTurbo)
         .domain([1.3,0.7])
       let simil = row.similar_suburb_name
-      return (simil == 0 || row.double_row) ? '#9C27B0' : color(simil)
+      return !row.final_project
+        ? "#F44336" // red
+        : row.double_row
+          ? '#9C27B0' //deep-purple
+          : simil == 0
+            ? '#009688' //teal
+            : color(simil)
+          //? '#E91E63' //pink
+          //: simil == 0
+            //? '#9C27B0' //deep-purple
     },
     drawImage(){
       let vm = this
@@ -404,7 +438,7 @@ export default {
         })
         .attr("stroke", d=> {
           if (d.id == row.id)
-            return "red"
+            return "#F44336"
           else
             return "#304FFE"
         })
@@ -513,18 +547,57 @@ export default {
             hide-details
             item-value="id"
             v-model="selected_pp"
-            style="max-width: 350px;"
+            style="max-width: 320px;"
           >
             <template v-slot:selection="{ item }">
+              <v-icon :color="item.status_calc.color" class="mr-2">
+                {{item.status_calc.icon}}
+              </v-icon>
               {{item.townhall}}
             </template>
             <template v-slot:item="{ item }">
-              <v-icon :color="item.status.color" class="mr-2">
-                {{item.status.icon}}
+              <v-icon :color="item.status_calc.color" class="mr-2">
+                {{item.status_calc.icon}}
               </v-icon>
               {{`${item.townhall} (${item.period_pp})`}}
+              <v-icon :color="item.status_obj.color" class="ml-2">
+                {{ item.status_obj.icon }}
+              </v-icon>
             </template>
           </v-select>
+          <v-select
+            v-if="selected_pp"
+            :items="status_verif"
+            label="Status validación"
+            outlined
+            class="ml-3"
+            style="max-width: 260px;"
+            hide-details
+            item-text="text"
+            item-value="name"
+            return-object
+            v-model="selected_pp.status_obj"
+            _change="fetchPublicAccounts"
+          >
+            <template v-slot:selection="{ item }">
+              <v-icon :color="item.color" class="mr-2">
+                {{item.icon}}
+              </v-icon>
+              <span :class="`${item.color}--text`">
+                {{item.text}}
+              </span>
+            </template>
+            <template v-slot:item="{ item }">
+              <v-icon :color="item.color" class="mr-2">
+                {{item.icon}}
+              </v-icon>
+              {{item.text}}              
+            </template>
+          </v-select>
+          <span v-if="selected_pp">
+            {{selected_pp.status}}
+            {{selected_pp.status_obj}}
+          </span>
           <v-spacer></v-spacer>
         </v-card-title>
         <v-row v-if="selected_pp" align="center">
