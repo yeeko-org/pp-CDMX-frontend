@@ -56,6 +56,16 @@ export default {
           validated: null,
         },
       ],
+      nav_pages: [
+        { icon: 'backward', icon_row: 'left', fast: true, next: -1,
+          key: 'ArrowLeft', key_row: 'ArrowUp' },
+        { icon: 'backward', icon_row: 'left', fast: false, next: -1,
+          key: 'ArrowLeft', key_row: 'ArrowUp' },
+        { icon: 'forward', icon_row: 'right', fast: false, next: 1,
+          key: 'ArrowRight', key_row: 'ArrowDown' },
+        { icon: 'forward', icon_row: 'right', fast: true, next: 1,
+          key: 'ArrowRight', key_row: 'ArrowDown' }
+      ],
       status_verif: [
         { 
           color: 'grey',
@@ -263,6 +273,23 @@ export default {
       },[])
     }
   },
+  mounted(){
+    window.addEventListener('keydown', (e) => {
+      console.log(e)
+      if (e.path.length < 6 && this.current_image){
+        let curr_nav = this.nav_pages.find(nav=>
+          nav.key == e.key && nav.fast == e.ctrlKey)
+        if (curr_nav)
+          this.changeImage(curr_nav)
+        else if (this.current_row){
+          curr_nav = this.nav_pages.find(nav=>
+            nav.key_row == e.key && nav.fast == e.ctrlKey)
+          if (curr_nav)
+            this.changeRow2(curr_nav)
+        }
+      }
+    });
+  },  
   watch:{
     selected_pp(after){
       this.toBlank()
@@ -316,6 +343,17 @@ export default {
           })
       })
     },
+    changeImage(nav){
+      try{
+        let images = this.available_images
+        if (nav.fast)
+          images = images.filter(img=>!img.validated)
+        const img_idx = images.findIndex(img=>
+          img.id == this.current_image.image.id)
+        let next_img = images[img_idx+nav.next].id
+        this.resetImage(next_img)
+      } catch(err){}
+    },
     changeStatusPA(status){
       this.putPA([this.selected_pp.id, {status: status.name}])
     },
@@ -337,11 +375,7 @@ export default {
       let body = { validated: option }
       this.putImage([curr_id, curr_pp, body]).then(res=>{
         this.loading = false
-        let img_idx = this.available_images.findIndex(img=>img.id==curr_id)
-        try{
-          let next_img = this.available_images[img_idx+1].id
-          this.resetImage(next_img)
-        } catch(err){}
+        this.changeImage(this.nav_pages[2])
       })
     },
     format(num){
@@ -525,6 +559,16 @@ export default {
       const suma = direction == 'left' ? -1 : 1
       this.updateSelected(this.rows[this.current_row.idx_tb + suma])
     },
+    changeRow2(nav){
+      try{
+        let rows = this.rows
+        if (nav.fast)
+          rows = rows.filter(row=>row.need_review)
+        const row_idx = rows.findIndex(row=> row.id == this.current_row.id)
+        let next_row = rows[row_idx+nav.next]
+        this.updateSelected(next_row)
+      } catch(err){ console.log(err) }
+    },    
   },
 }
 </script>
@@ -572,7 +616,7 @@ export default {
           <v-select
             v-if="selected_pp"
             :items="status_verif"
-            label="Status validación"
+            label="Status Cuenta Pública"
             outlined
             class="ml-3"
             style="max-width: 260px;"
@@ -598,7 +642,7 @@ export default {
               {{item.text}}              
             </template>
           </v-select>
-          <span v-if="selected_pp">
+          <span v-if="selected_pp && false">
             {{selected_pp.status}}
             {{selected_pp.status_obj}}
           </span>
@@ -616,6 +660,16 @@ export default {
               dark
               @click="resetImage(img.id)"
             >{{img.path.substr(-6,2)}}</v-chip>
+            <v-btn
+              v-for="nav in nav_pages"
+              color="accent"
+              icon
+              fab
+              small
+              @click="changeImage(nav)"
+            >
+              <v-icon>{{`fa-${nav.fast ? 'fast-' : ''}${nav.icon}`}}</v-icon>
+            </v-btn>
           </v-col>
           <v-col cols="auto" class="pt-0 shrink">
             <v-select
@@ -652,13 +706,15 @@ export default {
           Colonia seleccionada
           <v-spacer></v-spacer>
           <v-btn
-            v-for="orient in ['left','right']"
+            v-for="nav in nav_pages"
             color="accent"
             icon
             class="ml-2"
-            @click="changeRow(orient)"
+            @click="changeRow2(nav)"
           >
-            <v-icon>{{`fa-angle-double-${orient}`}}</v-icon>
+            <v-icon>
+              {{`fa-angle-${nav.fast ? 'double-' : ''}${nav.icon_row}`}}
+            </v-icon>
           </v-btn>
           <v-spacer></v-spacer>
           <v-btn
