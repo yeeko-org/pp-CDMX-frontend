@@ -145,11 +145,12 @@ export default {
   },
   mounted(){
     window.addEventListener('keydown', (e) => {
-      if (e.path.length < 6 && this.current_image && this.current_row.id){
+      if (e.path.length < 6 && this.current_image){
         let curr_nav = this.nav_pages.find(nav=>
           nav.key_row == e.key && nav.fast == e.ctrlKey)
-        if (curr_nav)
+        if (curr_nav){
           this.changeRow2(curr_nav)
+        }
       }
     });
   },
@@ -161,8 +162,6 @@ export default {
       this.current_row = {}
     },
     resetImage([forced_id, show_next=false]){
-      console.log(forced_id)
-      console.log(show_next)
       let random_id = forced_id || Math.ceil(Math.random()*1006)
       let hard_reset = true
       let next_idx = this.current_row.idx_up
@@ -260,8 +259,12 @@ export default {
         let rows = this.rows
         if (nav.fast)
           rows = rows.filter(row=>row.need_review)
-        const row_idx = rows.findIndex(row=> row.id == this.current_row.id)
-        let next_row = rows[row_idx+nav.next]
+        const row_id = this.current_row.id
+        let next_row = rows[0]
+        if (row_id){
+          const row_idx = rows.findIndex(row=> row.id == row_id)
+          next_row = rows[row_idx+nav.next]
+        }
         this.updateSelected(next_row)
       } catch(err){ }
     },
