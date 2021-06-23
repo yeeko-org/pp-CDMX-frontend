@@ -1,36 +1,22 @@
 <script>
 
-import { mapActions, mapState } from "vuex";
+import { mapActions } from "vuex";
 import * as d3 from 'd3';
+import NavPA from "~/components/validation/NavPA";
+import EditRow from "~/components/validation/EditRow";
 
 export default {
   name: 'References3',
   layout: 'diamonds',
+  components: { NavPA, EditRow },
   data () {
     return {
       width: 2200,
       height: 1700,
       current_image: undefined,
-      selected_pp: undefined,
       loading: true,
       current_row: {},
-      fp_data: {},
       base_url: 'https://cdn-yeeko.s3-us-west-2.amazonaws.com/ollin/',
-      rules: {
-        defined_n: v => v != undefined && v !="" || 'Escribe la respuesta',
-      },      
-      number_cols: [
-        { text: 'Avance', field: 'progress',  is_perc: true, idx: 3},
-        { text: 'Aprobado', field: 'approved', idx: 4 },
-        { text: 'Modificado', field: 'modified', idx: 5 },
-        { text: 'Ejecutado', field: 'executed', idx: 6  },
-        { text: 'Variación', field: 'variation', is_perc: true, idx: 7 },
-      ],
-      large_texts: [
-        { text: 'Colonia', field: 'suburb', cols: 3, idx: 0 },
-        { text: 'Proyecto', field: 'project_name', cols: 4, idx: 1},
-        { text: 'Descripción', field: 'description', cols: 5, idx: 2},
-      ],
       status_pp: [
         {
           color: 'light-green',
@@ -66,68 +52,15 @@ export default {
         { icon: 'forward', icon_row: 'right', fast: true, next: 1,
           key: 'ArrowRight', key_row: 'ArrowDown' }
       ],
-      status_verif: [
-        { 
-          color: 'grey',
-          icon: 'fa-question',
-          text: 'Desconocido',
-          name: 'incompleted',
-        },
-        { 
-          color: 'purple',
-          icon: 'fa-exclamation-triangle',
-          text: 'Requiere correcciones',
-          name: 'need_review',
-        },
-        {
-          color: 'light-blue',
-          icon: 'fa-user-edit',
-          name: 'modified',
-          text: 'Corrección completa'
-        },
-        { 
-          color: 'green',
-          icon: 'fa-check-double',
-          text: 'Validado',
-          name: 'validated',
-        },
-      ],
     }
   },
   computed:{
-    ...mapState({
-      public_accounts_raw: state => state.reports.public_accounts,
-    }),
     url(){
       if (!this.current_image)
         return ''
       let path = this.current_image.image.path
       let year = path.substr(3,4)
       return `${this.base_url}${year}/${path}`
-    },
-    public_accounts(){
-      if (!this.public_accounts_raw)
-        return []
-      return this.public_accounts_raw.map(pa=>{
-        let status_name = 'pending'
-        if (pa.pp_images.some(img=> img.validated === false))
-          status_name = 'warning'
-        else if (pa.pp_images.every(img=> img.validated === true))
-          status_name = 'complete'
-        //else if (pa.pp_images.some(img=> img.validated === true))
-          //status_name = 'incomplete'
-        let status_calc = this.status_pp.find(st=>st.name == status_name)
-        let status = this.status_verif.find(st=>st.name == pa.status)
-        return { ...pa, ...{status_calc: status_calc}, ...{status_obj: status} }
-      })
-      .slice().sort((a,b)=> d3.ascending(a.townhall, b.townhall))
-    },
-    available_images(){
-      if (!this.selected_pp)
-        return []
-      return this.selected_pp.pp_images.map(img=>(
-        {...img, ...this.status_pp.find(st=>st.validated === img.validated)}))
-          .slice().sort((a,b)=> d3.ascending(a.path, b.path))
     },
     rows(){
       let curr_img = this.current_image
@@ -148,7 +81,6 @@ export default {
         }
         let has_errors = relev_errors.some(err => 
           err.includes('columna') && !err.includes('anormal'))
-
         let has_first_col = false 
         try{
           has_first_col = !!row.formatted_data[0]
@@ -159,29 +91,6 @@ export default {
         try{
           double_row = final_proj.rows_count > 1
         }catch(err){}
-          //? '#E91E63' //pink
-          //? '#FFC107' //amber
-          //? '#FF9800' //orange
-          //: "#E0E0E0" //grey
-          //? '#F44336' //red
-          //? '#4CAF50' //green
-          //? '#CDDC39' //lime
-        /*let color = row.validated === false
-          ? '#D81B60' //pink2
-          : row.validated === true 
-            ? '#009688' //teal
-            : row.final_project
-              ? has_errors
-                ? '#FF5722' //deep-orange
-                : double_row
-                  ? '#673AB7' //deep-purple
-                  : has_warnings
-                    ? '#FF9800' //orange
-                    : '#8BC34A' //ligth-green
-              : has_first_col
-                ? "#673AB7" //deep-purple
-                : "#9E9E9E" //grey*/
-
         let color = row.validated === false
           ? '#D81B60' //pink2
           : row.validated === true 
@@ -222,35 +131,8 @@ export default {
       return { 
         divs: divs,
         y: [start_y, end_y],
-        view_box: [(divs[0] - 40) || 0, start_y - 20,
-                  divs[8] - divs[0] + 60, end_y - start_y + 30]
-      }
-    },
-    available_ammounts(){
-      let ammounts = this.number_cols.filter(num=> !num.is_perc)
-      return ammounts.reduce((tot, num)=> {
-        let curr_num = parseFloat(this.fp_data[num.field])
-        return (!curr_num || tot.includes(curr_num))
-          ? tot
-          : [...tot, curr_num]
-      },[0])
-    },
-    custom_remain(){
-      if (!this.current_image)
-        return []
-      let final_projects = this.current_image.final_projects
-      let fp_matched = final_projects.filter(fp=> fp.rows_count)
-        .slice().sort((a,b)=> d3.descending(a.rows_count, b.rows_count))
-      let fp_orphans = final_projects.filter(fp=> !fp.rows_count)
-      let empty = { id: null, suburb_name: 'NINGUNA COLONIA'}
-      return [empty, ...fp_orphans, ...fp_matched]
-    },
-    selectedSuburb(){
-      try{
-        return this.custom_remain.find(sub=>
-          sub.id == this.fp_data.final_project).suburb_cve_col
-      }catch(err){
-        return " ------ "
+        view_box: [( divs[0] - 40) || 0,        start_y - 20,
+                     divs[8] - divs[0] + 60,    end_y - start_y + 30 ]
       }
     },
     next_need_review(){
@@ -260,75 +142,32 @@ export default {
         return false
       }
     },
-    errors(){
-      if (!this.current_row.errors) return []
-      let columns = []
-      return this.current_row.errors.reduce((arr, err)=>{
-        let col_text = err.substr(err.indexOf("columna"), 18)
-        if (!columns.includes(col_text) && !err.includes('Value')){
-          columns.push(col_text)
-          return [...arr, err]
-        }
-        return arr
-      },[])
-    }
   },
   mounted(){
     window.addEventListener('keydown', (e) => {
-      console.log(e)
-      if (e.path.length < 6 && this.current_image){
+      if (e.path.length < 6 && this.current_image && this.current_row.id){
         let curr_nav = this.nav_pages.find(nav=>
-          nav.key == e.key && nav.fast == e.ctrlKey)
+          nav.key_row == e.key && nav.fast == e.ctrlKey)
         if (curr_nav)
-          this.changeImage(curr_nav)
-        else if (this.current_row){
-          curr_nav = this.nav_pages.find(nav=>
-            nav.key_row == e.key && nav.fast == e.ctrlKey)
-          if (curr_nav)
-            this.changeRow2(curr_nav)
-        }
+          this.changeRow2(curr_nav)
       }
     });
-  },  
-  watch:{
-    selected_pp(after){
-      this.toBlank()
-      const av_imgs = this.available_images
-      try{
-        let next_img = av_imgs.find(img => !img.validated) || av_imgs[0]
-        this.resetImage(next_img.id)
-      } catch(err){
-        console.log(err)
-      }
-    }
   },
   methods:{
-    ...mapActions({
-      getNext : 'reports/GET_NEXT',
-      postNext : 'reports/POST_NEXT',
-      putRow : 'reports/PUT_ROW',
-      putImage : 'reports/PUT_IMAGE',
-      getImage : 'reports/GET_IMAGE',
-      fetchPAs : 'reports/FETCH_PUBLIC_ACCOUNTS',
-      putPA : 'reports/PUT_PA',
-    }),
+    ...mapActions({ getImage : 'reports/GET_IMAGE', }),
     toBlank(hard_reset=true){
       if (hard_reset)
         this.current_image = undefined
       this.current_row = {}
-      this.fp_data = {}
     },
-    fetchPublicAccounts(year){
-      this.toBlank()
-      this.selected_pp = undefined
-      this.fetchPAs(`?year=${year}`)
-    },
-    resetImage(forced_id, show_next=false){
+    resetImage([forced_id, show_next=false]){
+      console.log(forced_id)
+      console.log(show_next)
       let random_id = forced_id || Math.ceil(Math.random()*1006)
       let hard_reset = true
       let next_idx = this.current_row.idx_up
       try{ 
-        hard_reset = this.current_image.image.id != forced_id
+        hard_reset = this.current_image.image.id !== forced_id
       } catch(err) {}
       this.toBlank(hard_reset)
       this.getImage(random_id).then(res=>{
@@ -341,41 +180,6 @@ export default {
               rw.need_review && idx >= next_idx)
             this.updateSelected(next_row)
           })
-      })
-    },
-    changeImage(nav){
-      try{
-        let images = this.available_images
-        if (nav.fast)
-          images = images.filter(img=>!img.validated)
-        const img_idx = images.findIndex(img=>
-          img.id == this.current_image.image.id)
-        let next_img = images[img_idx+nav.next].id
-        this.resetImage(next_img)
-      } catch(err){}
-    },
-    changeStatusPA(status){
-      this.putPA([this.selected_pp.id, {status: status.name}])
-    },
-    saveRow(valid, show_next=false){
-      this.fp_data.validated = valid
-      this.loading = true
-      this.putRow(this.fp_data).then(res=>{
-        if (!show_next)
-          this.$vuetify.goTo(0,
-            {duration: 400, offset: 20, easing:'easeInOutCubic'})
-        this.loading = false
-        this.resetImage(this.current_image.image.id, show_next)
-      })
-    },
-    saveImage(option){
-      this.loading = true
-      let curr_id = this.current_image.image.id
-      let curr_pp = this.selected_pp.id
-      let body = { validated: option }
-      this.putImage([curr_id, curr_pp, body]).then(res=>{
-        this.loading = false
-        this.changeImage(this.nav_pages[2])
       })
     },
     format(num){
@@ -447,117 +251,9 @@ export default {
             .attr("transform", d => `translate(${d},${vm.image_refs.y[0]})`)
     },
     updateSelected(row){
-      console.log(row)
-      if (!row) return
-      this.current_row = row
-      let vm = this
-      this.fp_data = {...{}, ...row}
-
-      let divs = this.image_refs.divs
-      let y0 = row.top - 10
-      let y1 = row.bottom - row.top + 20
-      
-      let buildViewBox = (ref) => (
-        [ divs[ref.idx0] - 20, y0, divs[ref.idx1] - divs[ref.idx0] + 40, y1])
-
-      let images_to_build = [
-        { idx0: 0, idx1: 3, fields: this.large_texts },
-        { idx0: 3, idx1: 8, fields: this.number_cols },
-      ]
-
-      var svg_main = d3.select("#imageback")
-      let squares = svg_main
-        .selectAll("rect#rect-color")
-        .attr("stroke-width", d=> {
-          if (d.id == row.id)
-            return "4"
-          else
-            return "0.5"
-        })
-        .attr("stroke", d=> {
-          if (d.id == row.id)
-            return "#F44336"
-          else
-            return "#304FFE"
-        })
-
-      var svg_images = d3.selectAll(".selected-image")
-        .data(images_to_build)
-          .join()
-          .attr("viewBox", d=> buildViewBox(d))
-      
-      svg_images.selectAll("#back_image2")
-        .data([vm.url])
-        .join("image")
-          .attr('xlink:href', d=> d)
-          .attr('width', vm.width)
-          .attr('id', 'back_image2')
-
-      let square1 = svg_images
-        .selectAll("rect")
-        .data(d=>d.fields)
-          .join("rect")
-            .each(function(p, j){
-              let parent = d3.select(this.parentNode).datum()
-              let curr_idx = parent.idx0 + j 
-              d3.select(this)
-                .style("width", divs[curr_idx + 1 ] - divs[curr_idx] - 4)
-                .attr("transform", `translate(${divs[curr_idx] - 2},${row.top})`)
-                .attr("fill", (d)=> {
-                  if (parent.idx0 && (row.final_project))
-                    if (row.errors.some(err=> err.includes(p.text)))
-                      return '#FFC107' //amber
-                  if (p.idx)
-                    return '#8BC34A' //ligth-green
-                  else if (row.final_project_obj){
-                    return vm.colorStart(row)
-                  }
-                  return row.color
-                })
-            })
-            .style("height", row.bottom - row.top)
-            .attr("opacity", 0.15)
-
-      this.$nextTick(()=>{
-        this.$vuetify.goTo("#bottom_page2",
-          {duration: 600, offset: 30, easing:'easeInOutCubic'})
-      })
-    },
-    addSpace(orient){
-      let up = orient == 'up'
-      var svg_images = d3.selectAll(".selected-image")
-      svg_images
-        .attr("viewBox", function(d){
-          try{
-            let current_vb =  d3.select(this).attr("viewBox").split(',')
-            current_vb[1] = parseInt(current_vb[1]) - (up ? 50 : 0 )
-            current_vb[3] = parseInt(current_vb[3]) + 50
-            return current_vb
-          }catch(err){
-            console.log(err)
-          }
-        })
-    },
-    addText(orient, field){
-      const suma = orient == 'up' ? 1 : -1
-      const ref_idx = this.current_row[`idx_${orient}`]
-      if (!this.rows[ref_idx])
+      if (!row)
         return
-      const table_data = this.rows[ref_idx].formatted_data
-      if (!table_data.length)
-        table_data = this.rows[ref_idx].vision_data
-      this.large_texts.forEach(txt=>{
-        if (txt.idx){
-          this.fp_data[txt.field] = suma == 1
-            ? `${this.fp_data[txt.field]} ${table_data[txt.idx]}`
-            : `${table_data[txt.idx]} ${this.fp_data[txt.field]}` 
-        }
-      })
-      this.current_row[`idx_${orient}`] += suma
-    },
-    changeRow(direction){
-      const suma = direction == 'left' ? -1 : 1
-      this.updateSelected(this.rows[this.current_row.idx_tb + suma])
+      this.current_row = row
     },
     changeRow2(nav){
       try{
@@ -567,8 +263,11 @@ export default {
         const row_idx = rows.findIndex(row=> row.id == this.current_row.id)
         let next_row = rows[row_idx+nav.next]
         this.updateSelected(next_row)
-      } catch(err){ console.log(err) }
-    },    
+      } catch(err){ }
+    },
+    updateIdx([idx_ref, suma]){
+      this.current_row[idx_ref] += suma
+    }
   },
 }
 </script>
@@ -577,125 +276,13 @@ export default {
   <v-card>
     <v-row>
       <v-col cols="12" xl="7">
-        <v-card-title primary-title class="pb-0">
-          <v-select
-            :items="['2014', '2015', '2015', '2016', '2017', '2018', '2019']"
-            label="Año"
-            outlined
-            class="mr-3"
-            style="max-width: 100px;"
-            hide-details
-            @change="fetchPublicAccounts"
-          ></v-select>
-          <v-select
-            :items="public_accounts"
-            label="Cuenta pública"
-            return-object
-            outlined
-            hide-details
-            item-value="id"
-            v-model="selected_pp"
-            style="max-width: 320px;"
-          >
-            <template v-slot:selection="{ item }">
-              <v-icon :color="item.status_calc.color" class="mr-2">
-                {{item.status_calc.icon}}
-              </v-icon>
-              {{item.townhall}}
-            </template>
-            <template v-slot:item="{ item }">
-              <v-icon :color="item.status_calc.color" class="mr-2">
-                {{item.status_calc.icon}}
-              </v-icon>
-              {{`${item.townhall} (${item.period_pp})`}}
-              <v-icon :color="item.status_obj.color" class="ml-2">
-                {{ item.status_obj.icon }}
-              </v-icon>
-            </template>
-          </v-select>
-          <v-select
-            v-if="selected_pp"
-            :items="status_verif"
-            label="Status Cuenta Pública"
-            outlined
-            class="ml-3"
-            style="max-width: 260px;"
-            hide-details
-            item-text="text"
-            item-value="name"
-            return-object
-            v-model="selected_pp.status_obj"
-            @change="changeStatusPA"
-          >
-            <template v-slot:selection="{ item }">
-              <v-icon :color="item.color" class="mr-2">
-                {{item.icon}}
-              </v-icon>
-              <span :class="`${item.color}--text`">
-                {{item.text}}
-              </span>
-            </template>
-            <template v-slot:item="{ item }">
-              <v-icon :color="item.color" class="mr-2">
-                {{item.icon}}
-              </v-icon>
-              {{item.text}}              
-            </template>
-          </v-select>
-          <span v-if="selected_pp && false">
-            {{selected_pp.status}}
-            {{selected_pp.status_obj}}
-          </span>
-          <v-spacer></v-spacer>
-        </v-card-title>
-        <v-row v-if="selected_pp" align="center">
-          <v-col cols="auto" class="pt-0 grow">
-            Páginas:
-            <v-chip 
-              v-for="img in available_images"
-              :key="img.id"
-              class="ml-2 mb-2"
-              :color="img.color"
-              :outlined="current_image ? current_image.image.id != img.id : true"
-              dark
-              @click="resetImage(img.id)"
-            >{{img.path.substr(-6,2)}}</v-chip>
-            <v-btn
-              v-for="nav in nav_pages"
-              color="accent"
-              icon
-              fab
-              small
-              @click="changeImage(nav)"
-            >
-              <v-icon>{{`fa-${nav.fast ? 'fast-' : ''}${nav.icon}`}}</v-icon>
-            </v-btn>
-          </v-col>
-          <v-col cols="auto" class="pt-0 shrink">
-            <v-select
-              v-if="current_image"
-              outlined
-              style="max-width: 200px;"
-              :items="status_pp.filter(st=>st.validated !== undefined)"
-              v-model="current_image.image.validated"
-              item-value="validated"
-              item-text="text"
-              @change="saveImage"
-              label="Status de página"
-            >          
-              <template v-slot:selection="{ item } ">
-                <span :class="`${item.color}--text`">
-                  {{ item.text }}
-                </span>
-              </template>
-              <template v-slot:item="{ item } ">
-                <span :class="`${item.color}--text`">
-                  {{ item.text }}
-                </span>
-              </template>
-            </v-select>
-          </v-col>
-        </v-row>
+        <NavPA
+          :status_pp="status_pp"
+          :nav_pages="nav_pages"
+          :current_image="current_image"
+          @to-blank="toBlank()"
+          @reset-image="resetImage($event)"
+        />
         <svg id="imageback" v-show="current_image"></svg>
         <v-divider></v-divider>
       </v-col>
@@ -724,7 +311,7 @@ export default {
             :loading="loading"
             :key="option.text"
             _class="`${option.color}--text`"
-            @click="saveRow(option.validated)"
+            @click="$refs.row.saveRow(option.validated)"
           >
             Guardar {{ option.text }}
           </v-btn>
@@ -733,120 +320,23 @@ export default {
             class="ml-12"
             :loading="loading"
             _class="`${option.color}--text`"
-            @click="saveRow(true, true)"
+            @click="$refs.row.saveRow(true, true)"
             :fab="next_need_review"
             :icon="!next_need_review"
           >
             <v-icon>fa-forward</v-icon>
           </v-btn>
         </v-card-title>
-        <v-row>
-          <v-col v-for="error in errors" cols="6">
-            <v-alert 
-              :type="error.includes('columna') && !error.includes('anormal')
-                ? 'error' : 'warning'"
-              class="mx-3"
-            >{{error}}</v-alert>
-          </v-col>
-          <v-col cols="12">
-            <svg class="selected-image"></svg>
-            <div class="float-left mt-n7 ml-10">
-              <v-btn
-                v-for="orient in ['up','down']"
-                color="primary"
-                icon
-                class="ml-4"
-                @click="addSpace(orient)"
-              >
-                <v-icon>{{`fa-chevron-${orient}`}}</v-icon>
-              </v-btn>        
-            </div>
-          </v-col>
-          <v-col
-            v-for="lt in large_texts"
-            :cols="lt.cols" 
-            :key="lt.field"
-          >
-            <template v-if="lt.field == 'suburb'">
-              <v-select
-                :items="custom_remain"
-                v-model="fp_data.final_project"
-                item-value="id"
-                item-text="suburb_name"
-                outlined
-                label="Colonia coincidente"
-              >
-                <template v-slot:item="{ item }">
-                  <b>{{item.rows_count}}</b>
-                  <v-icon 
-                    v-if="item.rows_count !== 1"
-                    color="warning"
-                  >fa-exclamation</v-icon>
-                  <span class="mx-2">{{item.suburb_name}}</span>
-                  <span class="grey--text">({{item.suburb_cve_col}})</span>
-                </template>
-                <template v-slot:selection="{ item }">
-                  <span v-if="item.rows_count !== 1" class="mr-2">
-                    <b>{{item.rows_count}}</b>
-                    <v-icon 
-                      color="warning"
-                    >fa-exclamation</v-icon>
-                  </span>
-                  <span>{{item.suburb_name}}</span>
-                </template>
-              </v-select>
-              {{selectedSuburb}}
-            </template>
-            <template v-else>
-              <v-textarea 
-                :label="lt.text"
-                outlined
-                hide-details
-                auto-grow
-                v-model="fp_data[lt.field]"
-                :rules="[rules.defined_n]"
-              ></v-textarea>
-              <v-chip
-                v-for="orient in ['up','down']"
-                small
-                class="mr-2"
-                @click="addText(orient, lt.field)"
-              >
-                <v-icon icon small>{{`fa-arrow-${orient}`}}</v-icon>
-              </v-chip>
-            </template>
-          </v-col>
-          <v-col cols="12">
-            <svg class="selected-image"></svg>
-          </v-col>
-          <v-col 
-            v-for="num in number_cols"
-            :cols="num.is_perc ? null : 3"
-            :key="num.field"
-          >
-            <v-text-field
-              outlined
-              type="number"
-              class="mb-1"
-              hide-details
-              :name="num.field"
-              :label="num.text"
-              v-model="fp_data[num.field]"
-              :rules="[rules.defined_n]"
-            ></v-text-field>
-            <template v-if="num.is_perc">
-              <v-chip @click="fp_data[num.field] = 0">0.0</v-chip>
-              <v-chip @click="fp_data[num.field] = 1.000">100</v-chip>
-            </template>
-            <template v-for="amm in available_ammounts">
-              <v-chip 
-                v-if="!num.is_perc && amm != fp_data[num.field]"
-                class="mr-1 mb-1"
-                @click="fp_data[num.field] = amm"
-              >{{ format(amm) }}</v-chip>
-            </template>
-          </v-col>
-        </v-row>
+        <EditRow
+          ref="row"
+          :image_refs="image_refs"
+          :rows="rows"
+          :url="url"
+          :current_row="current_row"
+          :current_image="current_image"
+          @update-idx="updateIdx($event)"
+          @reset-image="resetImage($event)"
+        />
       </v-col>
     </v-row>
     <div id="bottom_page"></div>
