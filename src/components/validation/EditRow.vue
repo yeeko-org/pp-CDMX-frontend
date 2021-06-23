@@ -109,6 +109,7 @@ export default {
     },
     updateSelected(row){
       let vm = this
+      console.log(row)
       this.fp_data = {...{}, ...row}
 
       let divs = this.image_refs.divs

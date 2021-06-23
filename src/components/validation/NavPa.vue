@@ -21,6 +21,12 @@ export default {
           text: 'Desconocido',
           name: 'incompleted',
         },
+        {
+          color: 'light-blue',
+          icon: 'fa-eye',
+          name: 'first',
+          text: 'Primera corrección'
+        },
         { 
           color: 'purple',
           icon: 'fa-exclamation-triangle',
@@ -28,10 +34,16 @@ export default {
           name: 'need_review',
         },
         {
-          color: 'light-blue',
+          color: 'blue',
           icon: 'fa-user-edit',
           name: 'modified',
           text: 'Corrección completa'
+        },
+        { 
+          color: 'red',
+          icon: 'fa-user-friends',
+          text: 'Revisar juntos',
+          name: 'together',
         },
         { 
           color: 'green',
