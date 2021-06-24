@@ -225,7 +225,7 @@ export const actions = {
     return new Promise (resolve => {
       this.$axios.put(`/public_account/image/${img_id}/`, curr_data)
         .then(({data})=>{
-          commit("UPDATE_IMAGE", [data, pp_id])
+          //commit("UPDATE_IMAGE", [data, pp_id])
           return resolve(data)
         })
     })

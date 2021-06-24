@@ -159,6 +159,8 @@ export default {
       let curr_pp = this.selected_pp.id
       let body = { validated: option }
       this.putImage([curr_id, curr_pp, body]).then(res=>{
+        let img_idx = this.pp_images.findIndex(img=> res.id==img.id)
+        this.pp_images.splice(img_idx, 1, res)
         this.loading = false
         this.changeImage(this.nav_pages[2])
       })
