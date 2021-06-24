@@ -111,7 +111,9 @@ export default {
         this.pp_images = res.pp_images
         const av_imgs = this.available_images
         try{
-          let next_img = av_imgs.find(img => !img.validated) || av_imgs[0]
+          let next_img = av_imgs.find(img => img.validated === null)
+                        || av_imgs.find(img => img.validated === false)
+                        || av_imgs[0]
           this.$emit('reset-image', [next_img.id])
         } catch(err){
           console.log("HOLA WATCH")
@@ -139,7 +141,7 @@ export default {
       try{
         let images = this.available_images
         if (nav.fast)
-          images = images.filter(img=>!img.validated)
+          images = images.filter(img=>img.validated === null)
         const img_idx = images.findIndex(img=>
           img.id == this.current_image.image.id)
         let next_img = images[img_idx+nav.next].id
@@ -147,7 +149,9 @@ export default {
       } catch(err){}
     },
     changeStatusPA(status){
-      this.putPA([this.selected_pp.id, {status: status.name}])
+      this.putPA([this.selected_pp.id, {status: status.name}]).then(res=>{
+        this.fetchPAs('')
+      })
     },
     saveImage(option){
       this.loading = true
