@@ -233,7 +233,8 @@ export const actions = {
   FETCH_PUBLIC_ACCOUNTS({commit}, params){
     return new Promise (resolve => {
       this.$axios.get(`/public_account/${params}`).then(({data})=>{
-        commit("SET_PUBLIC_ACCOUNTS", data)
+        if (!params)
+          commit("SET_PUBLIC_ACCOUNTS", data)
         return resolve(data)
       })
     })

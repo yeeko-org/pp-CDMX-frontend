@@ -13,18 +13,22 @@ export default {
   data () {
     return {
       selected_pp: undefined,
+      current_year: '',
       loading: true,
+      pp_images: [],
       status_verif: [
         { 
-          color: 'grey',
-          icon: 'fa-question',
-          text: 'Desconocido',
+          color: 'purple',
+          icon: 'fa-clock',
+          text: 'Inicial',
           name: 'incompleted',
+          order: 1,
         },
         {
           color: 'light-blue',
           icon: 'fa-eye',
           name: 'first',
+          order: 3,
           text: 'Primera corrección'
         },
         { 
@@ -32,11 +36,13 @@ export default {
           icon: 'fa-exclamation-triangle',
           text: 'Requiere correcciones',
           name: 'need_review',
+          order: 2,
         },
         {
           color: 'blue',
           icon: 'fa-user-edit',
           name: 'modified',
+          order: 4,
           text: 'Corrección completa'
         },
         { 
@@ -44,12 +50,14 @@ export default {
           icon: 'fa-user-friends',
           text: 'Revisar juntos',
           name: 'together',
+          order: 5,
         },
         { 
           color: 'green',
           icon: 'fa-check-double',
           text: 'Validado',
           name: 'validated',
+          order: 6,
         },
       ],
     }
@@ -61,25 +69,27 @@ export default {
     public_accounts(){
       if (!this.public_accounts_raw)
         return []
-      return this.public_accounts_raw.map(pa=>{
-        let status_name = 'pending'
-        if (pa.pp_images.some(img=> img.validated === false))
-          status_name = 'warning'
-        else if (pa.pp_images.every(img=> img.validated === true))
-          status_name = 'complete'
-        let status_calc = this.status_pp.find(st=>st.name == status_name)
+      let pas = this.public_accounts_raw.map(pa=>{
         let status = this.status_verif.find(st=>st.name == pa.status)
-        return { ...pa, ...{status_calc: status_calc}, ...{status_obj: status} }
+        return { ...pa, ...{status_obj: status} }
       })
-      .slice().sort((a,b)=> d3.ascending(a.townhall, b.townhall))
+      if (this.current_year)
+        return pas.filter(pa=>pa.period_pp == this.current_year)
+          .slice().sort((a,b)=>d3.ascending(a.townhall, b.townhall))
+      else
+        return pas.slice().sort((a,b)=>
+          d3.ascending(a.status_obj.order, b.status_obj.order))
     },
     available_images(){
-      if (!this.selected_pp)
-        return []
-      return this.selected_pp.pp_images.map(img=>(
+      //if (!this.selected_pp)
+        //return []
+      return this.pp_images.map(img=>(
         {...img, ...this.status_pp.find(st=>st.validated === img.validated)}))
           .slice().sort((a,b)=> d3.ascending(a.path, b.path))
     },
+  },
+  created(){
+    this.fetchPAs('')
   },
   mounted(){
     window.addEventListener('keydown', (e) => {
@@ -90,18 +100,24 @@ export default {
           this.changeImage(curr_nav)
       }
     });
-  },  
+  },
   watch:{
     selected_pp(after){
+      if (!after)
+        return
+      console.log(after)
       this.$emit('to-blank')
-      const av_imgs = this.available_images
-      try{
-        let next_img = av_imgs.find(img => !img.validated) || av_imgs[0]
-        this.$emit('reset-image', [next_img.id])
-      } catch(err){
-        console.log("HOLA WATCH")
-        console.log(err)
-      }
+      this.fetchPAs(`${after.id}/`).then(res=>{
+        this.pp_images = res.pp_images
+        const av_imgs = this.available_images
+        try{
+          let next_img = av_imgs.find(img => !img.validated) || av_imgs[0]
+          this.$emit('reset-image', [next_img.id])
+        } catch(err){
+          console.log("HOLA WATCH")
+          console.log(err)
+        }
+      })
     }
   },
   methods:{
@@ -112,10 +128,12 @@ export default {
       fetchPAs : 'reports/FETCH_PUBLIC_ACCOUNTS',
       putPA : 'reports/PUT_PA',
     }),
-    fetchPublicAccounts(year){
+    filterYear(year){
+      console.log("filterYear")
       this.$emit('to-blank')
       this.selected_pp = undefined
-      this.fetchPAs(`?year=${year}`)
+      //this.fetchPAs(`?year=${year}`)
+      //this.fetchPAs('')
     },
     changeImage(nav){
       try{
@@ -149,13 +167,14 @@ export default {
   <div>
     <v-card-title primary-title class="pb-0">
       <v-select
-        :items="['2014', '2015', '2015', '2016', '2017', '2018', '2019']"
+        :items="['','2014', '2015', '2015', '2016', '2017', '2018', '2019']"
         label="Año"
         outlined
         class="mr-3"
         style="max-width: 100px;"
         hide-details
-        @change="fetchPublicAccounts"
+        @change="filterYear"
+        v-model="current_year"
       ></v-select>
       <v-select
         :items="public_accounts"
@@ -168,19 +187,13 @@ export default {
         style="max-width: 320px;"
       >
         <template v-slot:selection="{ item }">
-          <v-icon :color="item.status_calc.color" class="mr-2">
-            {{item.status_calc.icon}}
-          </v-icon>
           {{item.townhall}}
         </template>
         <template v-slot:item="{ item }">
-          <v-icon :color="item.status_calc.color" class="mr-2">
-            {{item.status_calc.icon}}
-          </v-icon>
-          {{`${item.townhall} (${item.period_pp})`}}
-          <v-icon :color="item.status_obj.color" class="ml-2">
+          <v-icon :color="item.status_obj.color" class="mr-2">
             {{ item.status_obj.icon }}
           </v-icon>
+          {{`${item.townhall} (${item.period_pp})`}}
         </template>
       </v-select>
       <v-select

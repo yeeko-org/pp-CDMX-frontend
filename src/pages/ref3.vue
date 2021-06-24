@@ -27,9 +27,11 @@ export default {
           validated: true,
         },
         {
-          color: 'amber',
+          color: 'blue',
+          color_row: 'pink',
           icon: 'fa-exclamation',
-          text: 'Con pendientes',
+          text: 'Corregido',
+          text_row: 'Con pendientes',
           name: 'warning',
           calif_row: true,
           validated: false,
@@ -37,7 +39,7 @@ export default {
         {
           color: 'purple',
           icon: 'fa-ellipsis-h',
-          text: 'Por empezar',
+          text: 'Pendiente',
           name: 'pending',
           validated: null,
         },
@@ -309,14 +311,14 @@ export default {
           <v-spacer></v-spacer>
           <v-btn
             v-for="option in status_pp.filter(x=>x.calif_row)"
-            :color="option.color"
+            :color="option.color_row || option.color"
             class="ml-12"
             :loading="loading"
             :key="option.text"
             _class="`${option.color}--text`"
             @click="$refs.row.saveRow(option.validated)"
           >
-            Guardar {{ option.text }}
+            Guardar {{ option.text_row || option.text }}
           </v-btn>
           <v-btn
             color="success"
