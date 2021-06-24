@@ -2,13 +2,13 @@
 
 import { mapActions } from "vuex";
 import * as d3 from 'd3';
-import NavPA from "~/components/validation/NavPA";
+import NavPa from "~/components/validation/NavPa";
 import EditRow from "~/components/validation/EditRow";
 
 export default {
   name: 'References3',
   layout: 'diamonds',
-  components: { NavPA, EditRow },
+  components: { NavPa, EditRow },
   data () {
     return {
       width: 2200,
@@ -281,7 +281,7 @@ export default {
   <v-card>
     <v-row>
       <v-col cols="12" xl="7">
-        <NavPA
+        <NavPa
           :status_pp="status_pp"
           :nav_pages="nav_pages"
           :current_image="current_image"
