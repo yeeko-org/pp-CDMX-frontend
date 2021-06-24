@@ -73,12 +73,14 @@ export default {
         let status = this.status_verif.find(st=>st.name == pa.status)
         return { ...pa, ...{status_obj: status} }
       })
-      if (this.current_year)
+      if (this.current_year){
         return pas.filter(pa=>pa.period_pp == this.current_year)
           .slice().sort((a,b)=>d3.ascending(a.townhall, b.townhall))
-      else
+      }
+      else{
         return pas.slice().sort((a,b)=>
           d3.ascending(a.status_obj.order, b.status_obj.order))
+      }
     },
     available_images(){
       //if (!this.selected_pp)
@@ -104,7 +106,7 @@ export default {
   watch:{
     selected_pp(after){
       if (!after)
-        return
+        return true
       console.log(after)
       this.$emit('to-blank')
       this.fetchPAs(`${after.id}/`).then(res=>{
