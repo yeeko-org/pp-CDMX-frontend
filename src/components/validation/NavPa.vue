@@ -191,7 +191,7 @@ export default {
         style="max-width: 320px;"
       >
         <template v-slot:selection="{ item }">
-          {{item.townhall}}
+          {{`${item.townhall} (${item.period_pp})`}}
         </template>
         <template v-slot:item="{ item }">
           <v-icon :color="item.status_obj.color" class="mr-2">

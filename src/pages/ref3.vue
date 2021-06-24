@@ -45,13 +45,13 @@ export default {
         },
       ],
       nav_pages: [
-        { icon: 'backward', icon_row: 'left', fast: true, next: -1,
+        { icon: 'backward', icon_row: 'up', fast: true, next: -1,
           key: 'ArrowLeft', key_row: 'ArrowUp' },
-        { icon: 'backward', icon_row: 'left', fast: false, next: -1,
+        { icon: 'backward', icon_row: 'up', fast: false, next: -1,
           key: 'ArrowLeft', key_row: 'ArrowUp' },
-        { icon: 'forward', icon_row: 'right', fast: false, next: 1,
+        { icon: 'forward', icon_row: 'down', fast: false, next: 1,
           key: 'ArrowRight', key_row: 'ArrowDown' },
-        { icon: 'forward', icon_row: 'right', fast: true, next: 1,
+        { icon: 'forward', icon_row: 'down', fast: true, next: 1,
           key: 'ArrowRight', key_row: 'ArrowDown' }
       ],
     }
