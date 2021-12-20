@@ -21,6 +21,6 @@
   },
   "devDependencies": {
     "@nuxtjs/vuetify": "^1.0.0",
-    "@nuxtjs/google-analytics": "^2.3.0",
+    "@nuxtjs/google-analytics": "^2.3.0"
   }
 }
