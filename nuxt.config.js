@@ -51,7 +51,7 @@ export default {
     '@nuxtjs/axios'
   ],
   googleAnalytics: {
-    id: 'UA-80269278-1'
+    id: 'G-NYXYLEWWTL'
   },
   /*
   ** Axios module configuration
