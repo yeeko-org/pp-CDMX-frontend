@@ -102,7 +102,7 @@ export default {
   },
   watch:{
     current_period(after){
-      console.log(after)
+      //console.log(after)
       this.mountedMap(after)
     }
   },
@@ -123,7 +123,7 @@ export default {
       })
     },
     scale_color(val){
-      return d3.scaleSequential([0, 1], d3.interpolateCool)(val)
+      return d3.scaleSequential([0, 1], d3.interpolatePlasma)(val)
     },
     scale_participation(val){
       return d3.scaleSqrt()
@@ -138,7 +138,7 @@ export default {
       return `https://api.mapbox.com/styles/v1/${this.map_style}/tiles/${z}/${x}/${y}${devicePixelRatio > 1 ? "@2x" : ""}?access_token=${this.access_token}`
     },
     zoomFromSelect(value){
-      console.log(value)
+      //console.log(value)
       if (value){      
         let selec = d3.select(`#th_${value}`)
           .dispatch("click")
@@ -241,7 +241,7 @@ export default {
           d3.select(this)
             .classed('selected', true)
         }
-        console.log(d)
+        //console.log(d)
         let base_coords = d || vm.sub_sel_shape
         const [[x0, y0], [x1, y1]] = d3.geoBounds(base_coords);
         var base_scale = Math.max(x1 - x0, y1 - y0)
@@ -531,7 +531,7 @@ export default {
         <div class="mb-3 mt-n2">
           <v-chip
             v-for="period in periods"
-            color="primary"
+            color="#895a8f"
             class="ml-2 mt-3"
             :outlined="period.id != current_period"
             @click="current_period = period.id"

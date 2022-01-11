@@ -40,8 +40,8 @@ export default {
   ** Nuxt.js dev-modules
   */
   buildModules: [
-    '@nuxtjs/vuetify',
-    '@nuxtjs/google-analytics'
+    '@nuxtjs/vuetify'
+    //'@nuxtjs/google-analytics'
   ],
   /*
   ** Nuxt.js modules
@@ -50,9 +50,9 @@ export default {
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios'
   ],
-  googleAnalytics: {
+  /*googleAnalytics: {
     id: 'G-SCF4H36VVK'
-  },
+  },*/
   /*
   ** Axios module configuration
   ** See https://axios.nuxtjs.org/options

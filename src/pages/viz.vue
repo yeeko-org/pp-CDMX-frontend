@@ -113,7 +113,7 @@ export default {
       let base_height = ((len_th + 1) * vm.squares.height)
         + ((len_th + 2 ) * sq_paddings.y)
       let height = base_height + vm.paddings.top + vm.paddings.bottom
-      console.log(height)
+      //console.log(height)
       const svg = d3.select('#DataViz')
           .attr("viewBox", [0, 0, vm.width, height]);
 

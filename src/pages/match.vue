@@ -60,7 +60,7 @@ export default {
         match_review: this.match_review,
         comment_match: this.general_comment
       }
-      console.log(new_data)
+      //console.log(new_data)
       this.loading = true
       this.postPublicAccount(new_data).then(res=>{
         this.$vuetify.goTo(0,

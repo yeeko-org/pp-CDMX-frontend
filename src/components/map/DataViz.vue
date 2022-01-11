@@ -126,8 +126,8 @@ export default {
     build_map(){
       var vm = this
 
-      console.log(vm.all_th)
-      console.log(vm.grouped_years_arr)
+      //console.log(vm.all_th)
+      //console.log(vm.grouped_years_arr)
 
       if (!vm.public_accounts || !vm.hered_townhalls || vm.built)
         return
@@ -139,7 +139,7 @@ export default {
       let base_height = ((len_th + 1) * vm.squares.height)
         + ((len_th + 2 ) * sq_paddings.y)
       let height = base_height + vm.paddings.top + vm.paddings.bottom
-      console.log(height)
+      //console.log(height)
       const svg = d3.select('#DataViz')
           .attr("viewBox", [0, 0, vm.width, height]);
 

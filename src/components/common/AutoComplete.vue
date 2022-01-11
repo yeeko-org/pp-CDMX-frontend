@@ -56,13 +56,13 @@ export default {
       changeSuburbFound: 'reports/CHANGE_SUBURB_FOUND'
     }),
     changeText(str){
-      console.log("text",str)
+      //console.log("text",str)
       this.response_text=str
       this.count = 0
       //if (!this.special_items) return
 
       if (!str && this.response){
-        console.log("llego acá")
+        //console.log("llego acá")
         this.filtered_items = this.all_items
         return
       }
@@ -72,16 +72,16 @@ export default {
       str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
       //var first_number = str.match(/\d+/)
       var words = str.split(/\d+|\s/)
-      console.log(Date.now())
+      //console.log(Date.now())
 
 
       //words = words.filter(item => item && item !== "de" && item !== "colonia")
       var all_words = words//= words.map(word=>({'count':0, 'text':word}))
-      console.log(all_words)
+      //console.log(all_words)
       var categ_items = this.all_items.map(item=>{
         item.matches = all_words.reduce((score, word, idx)=>{
-          if (!item)
-            console.log(item)
+          //if (!item)
+          //  console.log(item)
           if(item.name.includes(word)){
             score+=0.8
             if(item.townhall_obj.name_upper.includes(word.text)){
@@ -103,12 +103,12 @@ export default {
       this.filtered_items = categ_items.sort((x, y)=>
         this.descending(x.matches, y.matches))
       //console.log(this.filtered_items)
-      console.log(Date.now())
-      console.log(this.filtered_items)
+      //console.log(Date.now())
+      //console.log(this.filtered_items)
 
     },
     changeValue(ev){
-      console.log("val",ev)
+      //console.log("val",ev)
       this.dont_match = false
       this.emitData()
     },
@@ -135,7 +135,7 @@ export default {
       return found
     },
     blurInput(str){
-      console.log("blur",str)
+      //console.log("blur",str)
       this.emitData()
     },
     buildItems(){
@@ -155,7 +155,7 @@ export default {
     this.buildItems()
   },
   mounted(){
-    console.log(this.filtered_items)
+    //console.log(this.filtered_items)
   }
 }
 </script>

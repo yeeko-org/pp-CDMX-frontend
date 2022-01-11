@@ -53,7 +53,7 @@ export default {
       try{
         let real = this.selected_suburb.final_projects[0]
         let manual = JSON.parse(real.manual_capture || "{}")
-        console.log(real)
+        //console.log(real)
         let has_real = real.approved !== null
         let progress = has_real ? real.progress : manual.progress
         if (progress>2)
@@ -238,19 +238,19 @@ export default {
       flat 
       tile 
       min-height="320"
-      color="primary lighten-4"
+      color="#e76e69"
       class="py-4"
     >
       <v-row justify="center" align="center" class="fill-height" no-gutters>
         <v-col align="center" justify="center" cols="12" sm="10" md="8" class="px-2">
           <v-icon
             x-large
-            color="accent darken-1"
+            color="white"
             v-intersect="propIntersect"
             section="search"
           >fa-search-location</v-icon>
           <br>
-          <div class="text-h5 mt-3">
+          <div class="text-h5 mt-3 white--text">
             Busca tu colonia y entérate del histórico del presupuesto participativo
           </div>
           <v-skeleton-loader
