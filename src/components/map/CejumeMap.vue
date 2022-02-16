@@ -32,39 +32,6 @@ export default {
     }),
   },
   methods:{
-    colocatePin(id=null){
-      if (!id){
-        this.pin = d3.select('#ResultsMap')
-          .append('image')
-          .attr('class', 'datamaps-pin')
-          .attr('xlink:href', 'https://nishati-us.com/wp-content/uploads/2014/09/red-location-icon-map-png-4.png')
-          .attr('height', 100)
-          .attr("x", this.width/2)
-          .attr('width', 100)
-          .attr("y", -100)
-      }
-      else{
-        var t = d3.transition()
-          .duration(750)
-          .ease(d3.easeElasticInOut.amplitude(0.5).period(2.755));
-        var select=d3.select(`#path-${id}`)
-        var bbox = select.node().getBBox()
-        var centroid =  [bbox.x + bbox.width/2, bbox.y + bbox.height/2];
-        this.pin
-          .attr("x", centroid[0]-20)
-        setTimeout(() => {
-          this.pin.transition(t)
-            .attr("y", centroid[1]-40)
-            .attr('height', 40)
-            .attr('width', 40)
-        },2000)
-      }
-    },
-    build_results(){
-      var grouped_reports = d3Array.rollups(this.reports, 
-        v => d3.sum(v, d=> d.count), d=> d.state, d=> d.institution)
-      //console.log(grouped_reports)
-    },
     build_map(){
 
       var is_small = this.$breakpoint.is.smAndDown
@@ -112,23 +79,6 @@ export default {
         return feat
       })
 
-      var tooltip = d3.select("body")
-        .append("div")
-          .attr("class", "tooltip")
-          .style("position", "absolute")
-          .style("padding", "10px")
-          .style("top", `${vm.height - 160}px`)
-          .style("left", "15px")
-          .style("z-index", "10")
-          .style("width", "360px")
-          .style("height", "200px")
-          .style("color", "white")
-          .style("background-color", "rgb(29, 65, 79, 0.7)")
-          .style("border-radius", "5px")
-          .style("visibility", "visible")
-          .text("");
-
-
       var states = svg
         .selectAll('path')
         .data(features)
@@ -142,6 +92,26 @@ export default {
             return count ? color_map4(y(count)) : '#a7a7a7'
           })
           .on("click", clickNode)
+
+      const height = svg.style("height");
+      const real_height = Number(height.substr(0, height.length - 2));
+
+      var tooltip = d3.select("body")
+        .append("div")
+          .attr("class", "tooltip")
+          .style("position", "absolute")
+          .style("padding", "10px")
+          .style("top", `${real_height - 150}px`)
+          .style("left", "15px")
+          .style("z-index", "10")
+          .style("width", "360px")
+          .style("height", "200px")
+          .style("color", "white")
+          .style("background-color", "rgb(29, 65, 79, 0.7)")
+          .style("border-radius", "5px")
+          .style("visibility", "visible")
+          .text("");
+
 
           
       var isTooltipHidden = true;
@@ -178,7 +148,7 @@ export default {
           htmlContent += "<div style='display: grid; grid-template-columns: repeat(4, 1fr); grid-gap: 10px;'>"
           vm.axes.forEach(axis=>{
             htmlContent += "<div>"
-            htmlContent += `<img src="icons/${axis}${node.properties[axis] ? '' : '-g'}.png" style="max-width: 100%;">`
+            htmlContent += `<img src="/icons/${axis}${node.properties[axis] ? '' : '-g'}.png" style="max-width: 100%;">`
             htmlContent += `<div 
               style='font-size: 15pt; font-weight: bold; text-align: center; font-family: Montserrat'
             > ${percent_node(node.properties, axis)} </div>`
@@ -199,18 +169,18 @@ export default {
       
       loadTooltipContent({properties: initial_node2})
 
-
       this.legend({
         color: d3.scaleSequential([1, 4], color_map4),
         title: "Número de programas",
         ticks: 4,
         fontSize: is_small ? 14 : 9,
-        marginLeft: is_small ? 20 : 600,
-        marginTop: is_small ? 570 : 60,
-        height: is_small ? 615 : 95,
-        width: is_small ? 400 : 890,
+        marginLeft: is_small ? 600 : 600,
+        marginTop: is_small ? 60 : 60,
+        height: is_small ? 95 : 95,
+        width: is_small ? 890 : 890,
         cejume: true,
       })
+      console.log(svg)
 
     },
   },
@@ -239,6 +209,11 @@ export default {
     <svg 
       id="ResultsMap"
     ></svg>
+
+    <v-card color="#31535e" class="tooltip" v-if="false">
+
+    </v-card>
+
     <v-tooltip 
       color="green"
       bottom 
@@ -259,3 +234,11 @@ export default {
     </v-tooltip>
   </div>
 </template>
+<style lang="scss">
+  
+  .tooltip{
+    position: absolute;
+  }
+
+
+</style>
