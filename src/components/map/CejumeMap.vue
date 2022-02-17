@@ -18,11 +18,13 @@ export default {
     return{
       is_tooltip: false,
       tt_data: undefined,
+      state_data: {},
       posX:-200,
       posY:-200,
       width: 980,
       state_id: 1,
       height: 640,
+      real_height: 0,
       axes: ['AMP', 'DPUB', 'VICT', 'MASC'],
     }
   },
@@ -30,18 +32,40 @@ export default {
     ...mapState({
       rows: state => state.cejume.rows ,
     }),
+    data3(){
+      return this.rows.map(state=>{
+        state.count = this.axes.reduce((tot, axis)=> tot += (!!state[axis] ? 1 : 0) ,0)
+        return state
+      })
+    }
   },
+  mounted(){
+   
+    this.build_map()
+    console.log(this.data3)
+    const total = d3.sum(this.data3, d=> d.Total)
+    const initial_node = {
+      NAME_1: 'NACIONAL',
+      total: total,
+      url: null
+    }
+    this.state_data = this.axes.reduce((obj, axis)=>{
+      const sum = d3.sum(this.data3, d=> d[axis])
+      return {...obj, ...{
+        [axis]: sum,
+        [`${axis}_perc`]: this.format_perc(sum / total)
+      }} 
+    }, initial_node)
+
+  },  
   methods:{
+    format_perc(v, dec=1){
+      return (!Number.isNaN(v)) ? d3.format(`.${dec}%`)(v) : '-'
+    },    
     build_map(){
 
       var is_small = this.$breakpoint.is.smAndDown
       var vm = this
-
-      const data3 = vm.rows.map(state=>{
-        state.count = vm.axes.reduce((tot, axis)=> tot += (!!state[axis] ? 1 : 0) ,0)
-        return state
-      })
-      console.log(data3)
 
       const projection = d3.geoMercator()
           .scale(1800)
@@ -55,10 +79,6 @@ export default {
           //.style("width", "100%")
           .style("max-width", "1320px")
 
-      /*var domain = d3.extent(this.ord_states, d=> d.count)
-      var y = d3.scaleSqrt()
-        .domain(domain)*/
-      
       var y = d3.scaleLinear()
         .domain([1,4])
 
@@ -70,14 +90,19 @@ export default {
         return prop[name] ? format_percent(prop[name] / prop.total) : '--'
       }
      
-      const features = topojson.feature(map_json, map_json.objects.MEX_adm1).features.map((feat, idx)=>{
-        feat.properties.algo = true 
-        vm.axes.forEach(axis=>{
-          feat.properties[axis] = Number(data3[idx][axis])
+      const features = topojson.feature(map_json, map_json.objects.MEX_adm1).features
+        .map((feat, idx)=>{
+          feat.properties.algo = true 
+          const total_st = Number(vm.data3[idx].Total)
+          vm.axes.forEach(axis=>{
+            const numb = Number(vm.data3[idx][axis])
+            feat.properties[axis] = numb
+            feat.properties[`${axis}_perc`] = vm.format_perc(numb / total_st)
+          })
+          feat.properties.total = total_st
+          feat.properties.url = vm.data3[idx].link
+          return feat
         })
-        feat.properties.total = Number(data3[idx].Total)
-        return feat
-      })
 
       var states = svg
         .selectAll('path')
@@ -88,86 +113,21 @@ export default {
           .attr("stroke-width", 1)
           .style("cursor", "pointer")
           .attr('fill', (d, i) => {
-            const count = data3[i].count
+            const count = vm.data3[i].count
             return count ? color_map4(y(count)) : '#a7a7a7'
           })
           .on("click", clickNode)
 
       const height = svg.style("height");
-      const real_height = Number(height.substr(0, height.length - 2));
+      vm.real_height = Number(height.substr(0, height.length - 2));
 
-      var tooltip = d3.select("body")
-        .append("div")
-          .attr("class", "tooltip")
-          .style("position", "absolute")
-          .style("padding", "10px")
-          .style("top", `${real_height - 150}px`)
-          .style("left", "15px")
-          .style("z-index", "10")
-          .style("width", "360px")
-          .style("height", "200px")
-          .style("color", "white")
-          .style("background-color", "rgb(29, 65, 79, 0.7)")
-          .style("border-radius", "5px")
-          .style("visibility", "visible")
-          .text("");
-
-
-          
-      var isTooltipHidden = true;
       function clickNode(node) {
-           // update visibility
-            states.attr("stroke-width", 1)
-            const elem = d3.select(this)
-            elem.attr("stroke-width", 3)
-           isTooltipHidden = !isTooltipHidden;
-           var visibility = (isTooltipHidden) ? "hidden" : "visible";
-
-           // load tooltip content (if it changes based on node)
-           loadTooltipContent(node);
-           
-           if (isTooltipHidden) {
-             unPinNode(node);
-           }
-        
-           // place tooltip where cursor was
-           /*return tooltip.style("top", (d3.event.pageY -10) + "px").style("left", (d3.event.pageX + 10) + "px").style("visibility", visibility);*/
-        return true
-      }
-
-  
-      // reset nodes to not be pinned
-      function unPinNode(node) {
-         node.fx = null;
-         node.fy = null;
-      }
-
-      function loadTooltipContent(node) {
-          var htmlContent = "<div style='font-family: Montserrat'>";
-          htmlContent += `<h2 style="text-transform: uppercase; color: white; font-family: Montserrat">${node.properties.NAME_1}<\/h2>`
-          htmlContent += "<div style='display: grid; grid-template-columns: repeat(4, 1fr); grid-gap: 10px;'>"
-          vm.axes.forEach(axis=>{
-            htmlContent += "<div>"
-            htmlContent += `<img src="/icons/${axis}${node.properties[axis] ? '' : '-g'}.png" style="max-width: 100%;">`
-            htmlContent += `<div 
-              style='font-size: 15pt; font-weight: bold; text-align: center; font-family: Montserrat'
-            > ${percent_node(node.properties, axis)} </div>`
-            htmlContent += "</div>"
-          })
-          htmlContent += "<\/div>"
-          htmlContent += "<\/div>"
-          tooltip.html(htmlContent);
-      }
-
-      const initial_node = {
-        NAME_1: 'NACIONAL',
-        total: d3.sum(data3, d=> d.Total)
-      }
-      const initial_node2 = vm.axes.reduce((obj, axis)=>{
-        return {...obj, ...{[axis]: d3.sum(data3, d=> d[axis])}} 
-      }, initial_node)
-      
-      loadTooltipContent({properties: initial_node2})
+        // update visibility
+        states.attr("stroke-width", 1)
+        const elem = d3.select(this)
+        elem.attr("stroke-width", 3)
+        vm.state_data = node.properties
+      }      
 
       this.legend({
         color: d3.scaleSequential([1, 4], color_map4),
@@ -183,16 +143,6 @@ export default {
       console.log(svg)
 
     },
-  },
-  watch: {
-  },  
-  created(){
-  },
-  mounted(){
-    //this.$store.dispatch('reports/FETCH_REPORTS').then((response)=>{
-      //this.build_results()
-      this.build_map()
-    //})
   },
 }
 </script>
@@ -210,9 +160,36 @@ export default {
       id="ResultsMap"
     ></svg>
 
-    <v-card color="#31535e" class="tooltip" v-if="false">
+    <v-card 
+      color="#31535e"
+      class="tooltip"
+      v-if="true"
+      :style="`top: ${real_height - 180}px`"
+    >
+      <v-card-title primary-title class="monse pa-0 white--text text-h4">
+        {{state_data.NAME_1}}
+      </v-card-title>
+      <v-row>
+        <v-col cols="3" v-for="axis in axes" class="px-2" :key="axis">
+          <v-img
+            :src="`/icons/${axis}${state_data[axis] ? '' : '-g'}.png`"
+            style="max-width: 100%;"
+          ></v-img>
+          <div class="text-center percent_text white--text">
+            {{state_data[`${axis}_perc`]}}
+          </div>
 
+        </v-col>
+      </v-row>
+      <v-card-actions v-if="state_data.url">
+        <v-spacer></v-spacer>
+        <v-btn color="#04c59c" rounded :href="state_data.url" target="_blank">
+          Ir al micrositio
+        </v-btn>
+        <v-spacer></v-spacer>
+      </v-card-actions>
     </v-card>
+
 
     <v-tooltip 
       color="green"
@@ -238,7 +215,22 @@ export default {
   
   .tooltip{
     position: absolute;
+    padding: 10px;
+    left: 15px;
+    z-index: 10;
+    width: 360px;
+    _height: 200px;
   }
 
+  .monse{
+    font-family: Montserrat;
+  }
+
+  .percent_text{
+    font-size: 15pt;
+    font-weight: bold;
+    text-align: center;
+    font-family: Montserrat
+  }
 
 </style>
