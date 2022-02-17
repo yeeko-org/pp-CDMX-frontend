@@ -37,31 +37,35 @@ export default {
         state.count = this.axes.reduce((tot, axis)=> tot += (!!state[axis] ? 1 : 0) ,0)
         return state
       })
+    },
+    national_data(){
+      const total = d3.sum(this.data3, d=> d.Total)
+      const initial_node = {
+        NAME_1: 'NACIONAL',
+        total: total,
+        url: null
+      }
+      return this.axes.reduce((obj, axis)=>{
+        const sum = d3.sum(this.data3, d=> d[axis])
+        return {...obj, ...{
+          [axis]: sum,
+          [`${axis}_perc`]: this.format_perc(sum / total)
+        }} 
+      }, initial_node)
+
     }
   },
   mounted(){
-   
     this.build_map()
-    console.log(this.data3)
-    const total = d3.sum(this.data3, d=> d.Total)
-    const initial_node = {
-      NAME_1: 'NACIONAL',
-      total: total,
-      url: null
-    }
-    this.state_data = this.axes.reduce((obj, axis)=>{
-      const sum = d3.sum(this.data3, d=> d[axis])
-      return {...obj, ...{
-        [axis]: sum,
-        [`${axis}_perc`]: this.format_perc(sum / total)
-      }} 
-    }, initial_node)
-
+    this.clearState()
   },  
   methods:{
     format_perc(v, dec=1){
-      return (!Number.isNaN(v)) ? d3.format(`.${dec}%`)(v) : '-'
-    },    
+      return v ? d3.format(`.${dec}%`)(v) : '--'
+    },
+    clearState(){
+      this.state_data = this.national_data
+    },
     build_map(){
 
       var is_small = this.$breakpoint.is.smAndDown
@@ -163,27 +167,40 @@ export default {
     <v-card 
       color="#31535e"
       class="tooltip"
+      :class="{'tooltip-xs': $breakpoint.is.xsOnly}"
       v-if="true"
-      :style="`top: ${real_height - 180}px`"
+      :style="`top: ${real_height - ($breakpoint.is.xsOnly ? -60 : 180)}px`"
     >
-      <v-card-title primary-title class="monse pa-0 white--text text-h4">
-        {{state_data.NAME_1}}
+      <v-card-title class="monse pa-0 white--text text-h6 text-sm-h4">
+        <div>{{state_data.NAME_1}}</div>
+        <v-spacer></v-spacer>
+        <v-btn color="grey" icon @click="clearState">
+          <v-icon>fa-close</v-icon>
+        </v-btn>
       </v-card-title>
       <v-row>
-        <v-col cols="3" v-for="axis in axes" class="px-2" :key="axis">
+        <v-col cols="3" v-for="axis in axes" class="px-1 px-sm-2" :key="axis">
           <v-img
             :src="`/icons/${axis}${state_data[axis] ? '' : '-g'}.png`"
             style="max-width: 100%;"
           ></v-img>
-          <div class="text-center percent_text white--text">
+          <div 
+            class="text-center percent-text white--text"
+            :class="{'percent-text-xs': $breakpoint.is.xsOnly}"
+          >
             {{state_data[`${axis}_perc`]}}
           </div>
-
         </v-col>
       </v-row>
-      <v-card-actions v-if="state_data.url">
+      <v-card-actions v-if="state_data.url" class="py-1 py-sm-2">
         <v-spacer></v-spacer>
-        <v-btn color="#04c59c" rounded :href="state_data.url" target="_blank">
+        <v-btn
+          color="#04c59c"
+          rounded
+          :href="state_data.url"
+          target="_blank"
+          :small="$breakpoint.is.xsOnly"
+        >
           Ir al micrositio
         </v-btn>
         <v-spacer></v-spacer>
@@ -218,19 +235,26 @@ export default {
     padding: 10px;
     left: 15px;
     z-index: 10;
-    width: 360px;
-    _height: 200px;
+    width: 380px;
+  }
+
+  .tooltip-xs{
+    width: 240px;
   }
 
   .monse{
     font-family: Montserrat;
   }
 
-  .percent_text{
+  .percent-text{
     font-size: 15pt;
     font-weight: bold;
     text-align: center;
     font-family: Montserrat
+  }
+
+  .percent-text-xs{
+    font-size: 12pt;
   }
 
 </style>
