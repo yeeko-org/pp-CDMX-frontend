@@ -26,6 +26,16 @@ export default {
       height: 640,
       real_height: 0,
       axes: ['AMP', 'DPUB', 'VICT', 'MASC'],
+      axes_complete: [{
+        key: 'AMP',
+        persons: 'Agentes de ministerio público',
+      }, 
+      {
+        key: 'DPUB',
+        persons: 'Defensores públicos',
+      }, 
+
+      'DPUB', 'VICT', 'MASC'],
     }
   },
   computed:{
@@ -43,6 +53,7 @@ export default {
       const initial_node = {
         NAME_1: 'NACIONAL',
         total: total,
+        national: true,
         url: null
       }
       return this.axes.reduce((obj, axis)=>{
@@ -60,11 +71,13 @@ export default {
     this.clearState()
   },  
   methods:{
-    format_perc(v, dec=1){
+    format_perc(v, dec=0){
       return v ? d3.format(`.${dec}%`)(v) : '--'
     },
     clearState(){
       this.state_data = this.national_data
+      d3.selectAll('.state-path')
+        .attr('stroke-width', 1)
     },
     build_map(){
 
@@ -82,6 +95,7 @@ export default {
           .attr("viewBox", [-20, 0, vm.width+40 , vm.height])
           //.style("width", "100%")
           .style("max-width", "1320px")
+          .attr("fill", "transparent")
 
       var y = d3.scaleLinear()
         .domain([1,4])
@@ -113,6 +127,7 @@ export default {
         .data(features)
           .join('path')
           .attr("d", path)
+          .attr("class", "state-path")
           .attr("stroke", "white")
           .attr("stroke-width", 1)
           .style("cursor", "pointer")
@@ -153,7 +168,7 @@ export default {
 
 <template>
   <div  id="MapCard">
-    <v-card-title class="no-wrap">AVANCE EN IMPLEMENTACIÓN</v-card-title>
+    <v-card-title class="no-wrap" v-if="false">AVANCE EN IMPLEMENTACIÓN</v-card-title>
     <!--<v-text-field
       outlined
       label="Estado id"
@@ -169,12 +184,12 @@ export default {
       class="tooltip"
       :class="{'tooltip-xs': $breakpoint.is.xsOnly}"
       v-if="true"
-      :style="`top: ${real_height - ($breakpoint.is.xsOnly ? -60 : 180)}px`"
+      :style="`top: ${real_height - ($breakpoint.is.xsOnly ? 0 : 260)}px`"
     >
       <v-card-title class="monse pa-0 white--text text-h6 text-sm-h4">
         <div>{{state_data.NAME_1}}</div>
         <v-spacer></v-spacer>
-        <v-btn color="grey" icon @click="clearState">
+        <v-btn color="grey" icon @click="clearState" v-if="state_data.url">
           <v-icon>fa-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -188,7 +203,10 @@ export default {
             class="text-center percent-text white--text"
             :class="{'percent-text-xs': $breakpoint.is.xsOnly}"
           >
-            {{state_data[`${axis}_perc`]}}
+            {{state_data[axis]}}
+            <div v-if="axis == 'AMP' && state_data.national">
+              ({{state_data[`${axis}_perc`]}})
+            </div>
           </div>
         </v-col>
       </v-row>

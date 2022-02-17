@@ -40,7 +40,8 @@ var mixinLegend = {
 
 
         let tickAdjust = g => g.selectAll(".tick line")
-          .attr("y1", marginTop + marginBottom - height);
+          .attr("y1", marginTop + marginBottom - height)
+          .attr("stroke", "white");
         let x;
 
         // Continuous
@@ -159,7 +160,7 @@ var mixinLegend = {
           .call(g => g.append("text")
             .attr("x", marginLeft)
             .attr("y", marginTop + marginBottom - height - 6)
-            .attr("fill", "currentColor")
+            .attr("fill", "white")
             .attr("text-anchor", "start")
             .attr("font-weight", "bold")
             .attr("font-size", `${fontSize}pt`)
@@ -170,6 +171,9 @@ var mixinLegend = {
             .attr("opacity", function(d, i){
               return d/color.domain()[1]  > .5 && !(i%2) ? 0 : 1
             })
+
+        d3.selectAll('.tick text')
+          .attr("fill", "white")
       }
     
   },
