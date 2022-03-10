@@ -1,72 +1,85 @@
 <script>
 
+import { mask } from 'vue-the-mask'
+
 export default {
+  directives: { mask, },  
+  components: { },  
   data() {
     return {
       networks: [
-        {'url':'https://www.facebook.com/ollinorg','icon':'fab fa-facebook'},
-        {'url':'https://twitter.com/ollinorg','icon':'fab fa-twitter'},
-        {'url':'http://ollinac.org/','icon':'fa-globe'},
+        {url: 'https://www.facebook.com/CeroDesabasto', icon:'fab fa-facebook'},
+        {url: 'https://twitter.com/cerodesabasto', icon:'fab fa-twitter'},
+        {url: 'https://nosotrxs.org/medicinas-para-todxs/', icon:'fa-globe'},
       ],
-      pages:["https://nosotrxs.org/", "https://fundar.org.mx/", "https://juntoscontraelcancer.mx/", "https://fibrosisquistica.org.mx/~h4u3f3d9/", "http://www.amlcc.org/", "https://www.dvvimss.org.mx/"]
+      is_mounted: false,
     }
   },
-  methods: {
-    getImgUrl(n) {
-      var images = require.context('~/static/', false, /\.png$/)
-      return images(`./desabasto-${n}.png`)
-    }
+  computed:{
+    is_sticker: (vm) => vm.$route.name == "sticker",
   },
+  mounted(){
+    this.$nextTick(()=>{
+      this.is_mounted = true
+      console.log(this.$route)
+    })
+  }
 }
 </script>
+
 <template>
   <v-footer
     padless
-    id="app-width"
-    color="primary dark lighten-1"
+    max-width="1180px"
+    style="margin: 0px auto"
   >
-    <v-col cols="12" sm="8" v-if="false">
+    <v-card
+      flat
+      tile
+      class="primary--text text-center"
+      style="border-top: 3px purple solid;"
+    >
       <v-card-title class="subtitle-1 font-weight-bold py-1">
-        Datos cívicos a tu alcance: Historia del presupuesto participativo
+        BORDE
       </v-card-title>
       <v-card-text class="primary--text pt-0 pb-1 text-left">
-        A través de esta página, Ollin, Jóvenes en Movimiento busca ofrecerte
-        una herramienta de <b>transparencia</b>, para que conozcas los datos más
-        relevantes de los proyectos ganadores de la consulta del Presupuesto
-        Participativo en la Ciudad de México, a lo largo del tiempo. <br>
-        Puedes consultar distintos indicadores que preparamos para que
-        puedas explorar más acerca de este ejercicio ciudadano.<span v-if="false">
-        puedes consultar distintos indicadores la descripción del proyecto, la variación entre el
-        presupuesto aprobado y ejercido; la cantidad de votos emitidos y la
-        cantidad de votos con la que ganó el proyecto triunfante en cada
-        colonia, barrio, pueblo, así como la categoría de clasificación brindada
-        tanto por el Instituto Electoral de la Ciudad de México, como por
-        aquella elaborada por nuestra organización.</span>
+        OBJETIVO: conocer los mecanismos de trabajo, las metodologías y procesos que implementan las SESEAs en sus procesos y proyectos, así como la relación que guardan con las organizaciones de la sociedad civil tanto locales como nacionales y sus retos en esta cruzada contra la corrupción.
       </v-card-text>
-    </v-col>
-    <v-col class="text-left" align="left" cols="12" sm="auto">
-      <a 
-        href="https://ollinac.org/"
-        class="text-h5 white--text"
-        target="_blank"
-      >
-        <strong>Ollin, A.C.</strong> — {{ new Date().getFullYear() }}
-      </a>
-    </v-col>
-    <v-spacer v-if="$breakpoint.is.smAndUp"></v-spacer>
-    <v-col class="text-right" cols="12" sm="auto">
-      <v-btn
-        v-for="net in networks"
-        :key="net.icon"
-        class="mx-4"
-        dark
-        icon
-        large
-        :href="net.url"
-        target="_blank"
-      >
-        <v-icon size="24px" large>{{ net.icon }}</v-icon>
-      </v-btn>
-    </v-col>
+      <template v-if="!is_sticker">
+        <v-divider></v-divider>
+        <v-row class="primary--text mx-0" justify="space-between">
+          <v-col class="mt-2" cols="5" sm="3" order="1" order-sm="1">
+            <a href="https://borde.mx/" class="primary--text" target="_blank">
+              {{ new Date().getFullYear() }} — <strong>Borde Político</strong>
+            </a>
+          </v-col>
+          <v-col cols="12" sm="3" order="3" order-sm="2">
+            <b>Contacto:</b> contacto@bordepolitico.com.mx
+          </v-col>
+          <v-col cols="7" sm="4" order="2" order-sm="3">
+            <v-btn
+              v-for="net in networks"
+              :key="net.icon"
+              align="end"
+              class="mx-4 primary--text"
+              icon
+              large
+              :href="net.url"
+              target="_blank"
+            >
+              <v-icon size="24px" large>{{ net.icon }}</v-icon>
+            </v-btn>
+          </v-col>
+
+        </v-row>
+      </template>
+      <v-card-actions v-else>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" outlined href="/?s=stk">
+          Más sobre el colectivo
+        </v-btn>
+        <v-spacer></v-spacer>
+      </v-card-actions>
+    </v-card>
   </v-footer>
 </template>
