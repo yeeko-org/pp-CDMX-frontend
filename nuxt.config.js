@@ -3,6 +3,8 @@ import colors from 'vuetify/es5/util/colors'
 export default {
   mode: 'universal',
   srcDir: 'src/',
+  target: 'static',
+  ssr: false,
   /*
   ** Headers of the page
   */
@@ -89,6 +91,7 @@ export default {
   /*
   ** Build configuration
   */
+  fallback: true,
   build: {
     /*
     ** You can extend webpack config here
