@@ -1,4 +1,6 @@
 import * as d3 from 'd3';
+import ApiService from "./common";
+
 
 export const state = () => ({
   suburbs: undefined,
@@ -70,6 +72,12 @@ export const mutations = {
       cat.color=d3.schemeDark2[idx]
       return cat
     })
+  },
+
+  SET_ALL_CATALOGS (state, data){
+    state.axes = data.axes;
+    state.causes = data.causes;
+    state.questions = data.questions;
   },
   SET_FINAL_PROJECTS(state, reports){
     state.current_projects = reports;
@@ -154,6 +162,26 @@ export const actions = {
       })
     })
   },
+  FETCH_CATALOGS_SESNA ({ commit }) {
+    return new Promise (resolve => {
+      this.$axios.get('sesna/catalog/')
+      .then(({data})=>{
+        //commit("SET_REPORTS", data)
+        commit("SET_ALL_CATALOGS", data)
+        return resolve(data)
+      })
+    })
+  },
+  SAVE_PERSONA ({ commit }, new_data) {
+    return new Promise (resolve => {
+      this.$axios.post('/sesna/persona/', new_data).then(({data})=>{
+        return resolve(data)
+      }).catch(({response}) => {
+        console.log(response)
+        return resolve(response)
+      })
+    })
+  },  
   GET_SUBURB({ commit }, [sub_id, is_geo=true]) {
     return new Promise (resolve => {
       commit("SET_SUBURB_SHAPE", {})

@@ -128,7 +128,7 @@ export default {
         :order="($breakpoint.is.xsOnly ? 2 : 1)">
         <v-card class="pb-6">
           <v-card-title primary-title>
-            Introducción {{step}}
+            Introducción
           </v-card-title>
           <v-card-text class="subtitle-1 black--text">
             <p>
