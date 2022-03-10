@@ -19,13 +19,26 @@ export default {
       is_tooltip: false,
       tt_data: undefined,
       state_data: {},
-      posX:-200,
-      posY:-200,
+      data: {state: {}, national: {}},
+      visible_state: false,
+      posX: -200,
+      posY: -200,
       width: 980,
       state_id: 1,
       height: 640,
       real_height: 0,
       axes: ['AMP', 'DPUB', 'VICT', 'MASC'],
+      cards: [
+        {
+          key: 'state',
+          pos_x: 'left',
+        },
+        {
+          key: 'national',
+          pos_x: 'right',
+          nat: true
+        },
+      ],
       axes_complete: [{
         key: 'AMP',
         persons: 'Agentes de ministerio público',
@@ -69,15 +82,34 @@ export default {
   mounted(){
     this.build_map()
     this.clearState()
+    this.calcNational()
   },  
   methods:{
     format_perc(v, dec=0){
       return v ? d3.format(`.${dec}%`)(v) : '--'
     },
     clearState(){
-      this.state_data = this.national_data
+      //this.state_data = this.national_data
+      this.visible_state = false
       d3.selectAll('.state-path')
         .attr('stroke-width', 1)
+    },
+    calcNational(){
+      const total = d3.sum(this.data3, d=> d.Total)
+      const initial_node = {
+        NAME_1: 'NACIONAL',
+        total: total,
+        national: true,
+        url: null
+      }
+      this.data.national = this.axes.reduce((obj, axis)=>{
+        const sum = d3.sum(this.data3, d=> d[axis])
+        return {...obj, ...{
+          [axis]: sum,
+          [`${axis}_perc`]: this.format_perc(sum / total)
+        }} 
+      }, initial_node)
+
     },
     build_map(){
 
@@ -95,7 +127,7 @@ export default {
           .attr("viewBox", [-20, 0, vm.width+40 , vm.height])
           //.style("width", "100%")
           .style("max-width", "1320px")
-          .attr("fill", "transparent")
+          .attr("fill", "grey")
 
       var y = d3.scaleLinear()
         .domain([1,4])
@@ -145,18 +177,25 @@ export default {
         states.attr("stroke-width", 1)
         const elem = d3.select(this)
         elem.attr("stroke-width", 3)
-        vm.state_data = node.properties
-      }      
+        console.log(node.properties)
+        vm.data.state = node.properties
+        vm.visible_state = true
+      }
 
       this.legend({
         color: d3.scaleSequential([1, 4], color_map4),
         title: "Número de programas",
         ticks: 4,
-        fontSize: is_small ? 14 : 9,
-        marginLeft: is_small ? 600 : 600,
-        marginTop: is_small ? 60 : 60,
-        height: is_small ? 95 : 95,
-        width: is_small ? 890 : 890,
+        //fontSize: is_small ? 14 : 9,
+        //marginLeft: is_small ? 600 : 600,
+        //marginTop: is_small ? 60 : 60,
+        //height: is_small ? 95 : 95,
+        //width: is_small ? 890 : 890,
+        fontSize: 9,
+        marginLeft: 700,
+        marginTop: 300,
+        height: 335,
+        width: 990,
         cejume: true,
       })
       console.log(svg)
@@ -167,7 +206,7 @@ export default {
 </script>
 
 <template>
-  <div  id="MapCard">
+  <div  id="MapCard" color="grey darken-3">
     <v-card-title class="no-wrap" v-if="false">AVANCE EN IMPLEMENTACIÓN</v-card-title>
     <!--<v-text-field
       outlined
@@ -178,54 +217,65 @@ export default {
     <svg 
       id="ResultsMap"
     ></svg>
-
-    <v-card 
-      color="#31535e"
-      class="tooltip"
-      :class="{'tooltip-xs': $breakpoint.is.xsOnly}"
-      v-if="true"
-      :style="`top: ${real_height - ($breakpoint.is.xsOnly ? 0 : 260)}px`"
-    >
-      <v-card-title class="monse pa-0 white--text text-h6 text-sm-h4">
-        <div>{{state_data.NAME_1}}</div>
-        <v-spacer></v-spacer>
-        <v-btn color="grey" icon @click="clearState" v-if="state_data.url">
-          <v-icon>fa-close</v-icon>
-        </v-btn>
-      </v-card-title>
-      <v-row>
-        <v-col cols="3" v-for="axis in axes" class="px-1 px-sm-2" :key="axis">
-          <v-img
-            :src="`/icons/${axis}${state_data[axis] ? '' : '-g'}.png`"
-            style="max-width: 100%;"
-          ></v-img>
-          <div 
-            class="text-center percent-text white--text"
-            :class="{'percent-text-xs': $breakpoint.is.xsOnly}"
-          >
-            {{state_data[axis]}}
-            <div v-if="axis == 'AMP' && state_data.national">
-              ({{state_data[`${axis}_perc`]}})
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-      <v-card-actions v-if="state_data.url" class="py-1 py-sm-2">
-        <v-spacer></v-spacer>
-        <v-btn
-          color="#04c59c"
-          rounded
-          :href="state_data.url"
-          target="_blank"
-          :small="$breakpoint.is.xsOnly"
+    <template v-for="card in cards">
+      <v-card 
+        v-if="card.nat || visible_state"
+        color="#31535e"
+        class="tooltip"
+        _class="{'tooltip-xs': $breakpoint.is.xsOnly}"
+        :class="`${$breakpoint.is.xsOnly ? 'tooltip-xs' : ''}`"
+        :style="`top: ${card.nat
+          ? ($breakpoint.is.xsOnly ? real_height : 20)
+          : (real_height - ($breakpoint.is.xsOnly ? 0 : 260))}px;
+          ${card.pos_x}: ${$breakpoint.is.xsOnly ? 5 : 15}px;`"
+      >
+        <v-card-title
+          class="monse pa-0 white--text text-sm-h4"
+          :class="`text-${$breakpoint.is.xsOnly ? 'subtitle-1' : 'h6' }`"
         >
-          Ir al micrositio
-        </v-btn>
-        <v-spacer></v-spacer>
-      </v-card-actions>
-    </v-card>
-
-
+          <div>{{data[card.key].NAME_1}}</div>
+          <v-spacer></v-spacer>
+          <v-btn
+            v-if="data[card.key].url"
+            color="grey"
+            icon
+            @click="clearState"
+          >
+            <v-icon>fa-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-row>
+          <v-col cols="3" v-for="axis in axes" class="px-1 px-sm-2" :key="axis">
+            <v-img
+              :src="`/icons/${axis}${data[card.key][axis] ? '' : '-g'}.png`"
+              style="max-width: 100%;"
+            ></v-img>
+            <div 
+              class="text-center percent-text white--text"
+              :class="{'percent-text-xs': $breakpoint.is.xsOnly}"
+            >
+              {{data[card.key][axis]}}
+              <div v-if="axis == 'AMP' && data[card.key].national">
+                ({{data[card.key][`${axis}_perc`]}})
+              </div>
+            </div>
+          </v-col>
+        </v-row>
+        <v-card-actions v-if="data[card.key].url" class="py-1 py-sm-2">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="#04c59c"
+            rounded
+            :href="data[card.key].url"
+            target="_blank"
+            :small="$breakpoint.is.xsOnly"
+          >
+            Ir al micrositio
+          </v-btn>
+          <v-spacer></v-spacer>
+        </v-card-actions>
+      </v-card>
+    </template>
     <v-tooltip 
       color="green"
       bottom 
@@ -251,13 +301,12 @@ export default {
   .tooltip{
     position: absolute;
     padding: 10px;
-    left: 15px;
     z-index: 10;
     width: 380px;
   }
 
   .tooltip-xs{
-    width: 240px;
+    width: 190px;
   }
 
   .monse{
@@ -272,7 +321,7 @@ export default {
   }
 
   .percent-text-xs{
-    font-size: 12pt;
+    font-size: 10pt;
   }
 
 </style>
