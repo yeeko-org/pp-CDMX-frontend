@@ -163,6 +163,7 @@ var mixinLegend = {
             .attr("fill", "white")
             .attr("text-anchor", "start")
             .attr("font-weight", "bold")
+            .attr("font-family", "Montserrat")
             .attr("font-size", `${fontSize}pt`)
             .text(title));
 
@@ -174,6 +175,7 @@ var mixinLegend = {
 
         d3.selectAll('.tick text')
           .attr("fill", "white")
+          .attr("font-family", "Montserrat")
       }
     
   },

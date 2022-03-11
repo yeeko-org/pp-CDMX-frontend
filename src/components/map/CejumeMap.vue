@@ -42,12 +42,11 @@ export default {
       axes_complete: [{
         key: 'AMP',
         persons: 'Agentes de ministerio público',
-      }, 
+      },
       {
         key: 'DPUB',
         persons: 'Defensores públicos',
-      }, 
-
+      },
       'DPUB', 'VICT', 'MASC'],
     }
   },
@@ -56,10 +55,15 @@ export default {
       rows: state => state.cejume.rows ,
     }),
     data3(){
-      return this.rows.map(state=>{
-        state.count = this.axes.reduce((tot, axis)=> tot += (!!state[axis] ? 1 : 0) ,0)
+      console.log(this.rows)
+      const algo = this.rows.map(state=>{
+        state.count = this.axes.reduce((tot, axis)=>
+          //tot += (!!Number(state[axis]) ? 1 : 0) ,0)
+          tot += (!!state[axis] ? 1 : 0) ,0)
         return state
       })
+      console.log(algo)
+      return algo
     },
     national_data(){
       const total = d3.sum(this.data3, d=> d.Total)
@@ -70,10 +74,10 @@ export default {
         url: null
       }
       return this.axes.reduce((obj, axis)=>{
-        const sum = d3.sum(this.data3, d=> d[axis])
+        const sum = d3.sum(this.data3, d=> Numeber(d[axis]))
         return {...obj, ...{
           [axis]: sum,
-          [`${axis}_perc`]: this.format_perc(sum / total)
+          //[`${axis}_perc`]: this.format_perc(sum / total)
         }} 
       }, initial_node)
 
@@ -88,6 +92,9 @@ export default {
     format_perc(v, dec=0){
       return v ? d3.format(`.${dec}%`)(v) : '--'
     },
+    format_tot(v, dec=0){
+      return v ? d3.format(",")(v) : '0'
+    },
     clearState(){
       //this.state_data = this.national_data
       this.visible_state = false
@@ -99,6 +106,7 @@ export default {
       const initial_node = {
         NAME_1: 'NACIONAL',
         total: total,
+        total_format: this.format_tot(total),
         national: true,
         url: null
       }
@@ -106,8 +114,8 @@ export default {
         const sum = d3.sum(this.data3, d=> d[axis])
         return {...obj, ...{
           [axis]: sum,
-          [`${axis}_perc`]: this.format_perc(sum / total)
-        }} 
+          [`${axis}_tot`]: this.format_tot(sum)
+        }}
       }, initial_node)
 
     },
@@ -133,26 +141,43 @@ export default {
         .domain([1,4])
 
       var color_map4 = d3.scaleLinear([0, 1], ["#537f8f", "#00c69b"])
-
-      var format_percent = d3.format(".1%")
-
-      var percent_node = (prop, name) => {
-        return prop[name] ? format_percent(prop[name] / prop.total) : '--'
-      }
      
       const features = topojson.feature(map_json, map_json.objects.MEX_adm1).features
         .map((feat, idx)=>{
           feat.properties.algo = true 
           const total_st = Number(vm.data3[idx].Total)
           vm.axes.forEach(axis=>{
-            const numb = Number(vm.data3[idx][axis])
+            const numb = vm.data3[idx][axis] == ''
+              ? null
+              : Number(vm.data3[idx][axis])
             feat.properties[axis] = numb
-            feat.properties[`${axis}_perc`] = vm.format_perc(numb / total_st)
+            //feat.properties[`${axis}_perc`] = vm.format_perc(numb / total_st)
           })
           feat.properties.total = total_st
+          feat.properties.total_format = vm.format_tot(total_st)
           feat.properties.url = vm.data3[idx].link
           return feat
         })
+
+      /*function mouseMove(d, event) {
+        const width_svg = svg.style("width");
+        const real_width = Number(width_svg.substr(0, width_svg.length - 2));
+        const limit_right = is_region ? 300 : 80;
+        const final_left =
+          event.offsetX > real_width - limit_right
+            ? real_width - limit_right - 30
+            : event.offsetX;
+        tooltip
+          .style("left", `${final_left}px`)
+          .style("top", `${event.offsetY}px`);
+      }
+      function mouseVis(show = false) {
+        tooltip.style("visibility", show ? "visible" : "hidden");
+      }
+      function mouseOver(d, event) {
+        mouseMove(d, event);
+        mouseVis(d, event, true);
+      }*/
 
       var states = svg
         .selectAll('path')
@@ -168,9 +193,25 @@ export default {
             return count ? color_map4(y(count)) : '#a7a7a7'
           })
           .on("click", clickNode)
+          .on("mouseover", mouseOver)
+          .on("mouseleave", mouseLeave)
+          //.on("mousemove", d => mouseMove(d, event))
+          //.on("mouseleave", () => mouseVis(false));
+
 
       const height = svg.style("height");
       vm.real_height = Number(height.substr(0, height.length - 2));
+
+      function mouseOver(node) {
+        const elem = d3.select(this)
+        console.log(elem)
+        elem.attr('fill-opacity', 0.6)
+      }
+
+      function mouseLeave(node) {
+        //const elem = d3.select(this)
+        states.attr('fill-opacity', 1)
+      }
 
       function clickNode(node) {
         // update visibility
@@ -206,7 +247,7 @@ export default {
 </script>
 
 <template>
-  <div  id="MapCard" color="grey darken-3">
+  <v-card id="MapCard" color="grey darken-3">
     <v-card-title class="no-wrap" v-if="false">AVANCE EN IMPLEMENTACIÓN</v-card-title>
     <!--<v-text-field
       outlined
@@ -230,10 +271,10 @@ export default {
           ${card.pos_x}: ${$breakpoint.is.xsOnly ? 5 : 15}px;`"
       >
         <v-card-title
-          class="monse pa-0 white--text text-sm-h4"
+          class="pa-0 white--text text-sm-h4"
           :class="`text-${$breakpoint.is.xsOnly ? 'subtitle-1' : 'h6' }`"
         >
-          <div>{{data[card.key].NAME_1}}</div>
+          <div class="monse">{{data[card.key].NAME_1}}</div>
           <v-spacer></v-spacer>
           <v-btn
             v-if="data[card.key].url"
@@ -247,18 +288,25 @@ export default {
         <v-row>
           <v-col cols="3" v-for="axis in axes" class="px-1 px-sm-2" :key="axis">
             <v-img
-              :src="`/icons/${axis}${data[card.key][axis] ? '' : '-g'}.png`"
-              style="max-width: 100%;"
+              :src="`/icons/${axis}${data[card.key][axis] == null ? '-g' : ''}.png`"
+              :style="`max-width: 100%;
+                opacity: ${data[card.key][axis] === null ? .5 : 1};`"
             ></v-img>
             <div 
-              class="text-center percent-text white--text"
+              v-if="card.nat"
+              class="text-center percent-text white--text monse"
               :class="{'percent-text-xs': $breakpoint.is.xsOnly}"
             >
-              {{data[card.key][axis]}}
-              <div v-if="axis == 'AMP' && data[card.key].national">
-                ({{data[card.key][`${axis}_perc`]}})
-              </div>
+              {{data[card.key][`${axis}_tot`]}}
             </div>
+            <span v-else-if="false">{{data[card.key][axis]}} </span>
+          </v-col>
+          <v-col
+            v-if="!card.nat"
+            cols="12"
+            class="text-center percent-text white--text monse"
+          >
+            Total de participantes: {{data[card.key].total_format}}
           </v-col>
         </v-row>
         <v-card-actions v-if="data[card.key].url" class="py-1 py-sm-2">
@@ -269,6 +317,7 @@ export default {
             :href="data[card.key].url"
             target="_blank"
             :small="$breakpoint.is.xsOnly"
+            class="monse"
           >
             Ir al micrositio
           </v-btn>
@@ -294,7 +343,10 @@ export default {
         </span>
       </div>
     </v-tooltip>
-  </div>
+    <v-card v-if="false">
+      {{data3}}
+    </v-card>
+  </v-card>
 </template>
 <style lang="scss">
   
@@ -310,7 +362,7 @@ export default {
   }
 
   .monse{
-    font-family: Montserrat;
+    font-family: Montserrat !important;
   }
 
   .percent-text{
