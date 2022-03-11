@@ -247,7 +247,7 @@ export default {
 </script>
 
 <template>
-  <v-card id="MapCard" color="grey darken-3">
+  <div id="MapCard" color="grey darken-3">
     <v-card-title class="no-wrap" v-if="false">AVANCE EN IMPLEMENTACIÓN</v-card-title>
     <!--<v-text-field
       outlined
@@ -317,7 +317,7 @@ export default {
             :href="data[card.key].url"
             target="_blank"
             :small="$breakpoint.is.xsOnly"
-            class="monse"
+            class="monse white--text"
           >
             Ir al micrositio
           </v-btn>
@@ -346,7 +346,7 @@ export default {
     <v-card v-if="false">
       {{data3}}
     </v-card>
-  </v-card>
+  </div>
 </template>
 <style lang="scss">
   
