@@ -181,7 +181,17 @@ export const actions = {
         return resolve(response)
       })
     })
-  },  
+  },
+  SAVE_CHOOSES ({ commit }, new_data) {
+    return new Promise (resolve => {
+      this.$axios.post('/sesna/survey/', new_data).then(({data})=>{
+        return resolve(data)
+      }).catch(({response}) => {
+        console.log(response)
+        return resolve(response)
+      })
+    })
+  },
   GET_SUBURB({ commit }, [sub_id, is_geo=true]) {
     return new Promise (resolve => {
       commit("SET_SUBURB_SHAPE", {})
