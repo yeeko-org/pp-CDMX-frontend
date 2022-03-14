@@ -1,10 +1,11 @@
 import colors from 'vuetify/es5/util/colors'
 
 export default {
-  mode: 'universal',
+  //mode: 'universal',
   srcDir: 'src/',
-  target: 'static',
-  ssr: false,
+  //target: 'static',
+  //ssr: false,
+  ssr: true,
   /*
   ** Headers of the page
   */
@@ -88,6 +89,11 @@ export default {
     },
     treeShake: process.env.NODE_ENV == 'development' ? false : true,
   },
+  watchers: {
+    webpack: {
+      ignored: /node_modules/
+    }
+  },  
   /*
   ** Build configuration
   */
