@@ -21,8 +21,9 @@ export default {
       aws_url: 'https://cdn-yeeko.s3.amazonaws.com/',
       persona_data: {},
       step: 'initial',
+      //step: 'questions',
       test_step: null,
-      //test_step: 'axes',
+      //test_step: 'questions',
       //step: 'axes',
       //step: 'questions',
       final_axes: [],
@@ -209,13 +210,16 @@ export default {
           </v-card-title>
           <v-card-text class="subtitle-1 black--text">
             <p>
-              Como parte de las actividades de fortalecimiento de la colaboración entre sociedad civil y la Secretaría Ejecutiva del Sistema Estatal Anticorrupción, se diseñarán proyectos de cambio que llevarán a cabo las instituciones del Comité Coordinador del Sistema Estatal Anticorrupción.
+              Como parte del proyecto de colaboración entre la Secretaría Ejecutiva del Sistema Nacional Anticorrupción, las Secretarías Ejecutivas de los sistemas anticorrupción estatales y BORDE,  a continuación se presenta un breve ejercicio de priorización que constituye la segunda etapa para la generación de proyectos de cambio en materia de combate a la corrupción.
             </p>
             <p>
-              Al respecto, el primer paso es elegir, en conjunto con la Secretaría Ejecutiva, las causas de la corrupción más importantes de resolver. Las causas para este ejercicio de priorización, se tomaron de la Política Nacional Anticorrupción. Puedes conocer el documento en el siguiente <a href="https://borde.mx">enlace.</a>
+              En el presente ejercicio, las Secretarías Ejecutivas Estatales y organizaciones de la sociedad civil, deberán elegir y priorizar las causas y factores que contribuyen a la corrupción en cada entidad. La información para este ejercicio de priorización se tomó de la Política Nacional Anticorrupción y las políticas locales. Puedes conocer el documento en el siguiente enlace.
             </p>
             <p>
-              Una vez elegidas las causas, se realizarán talleres participativos para analizar el diseño de los proyectos de cambio que serán ejecutados y monitoreados por las mismas Secretarías y sociedad civil locales. 
+              La información que resulte de este ejercicio será analizada por BORDE, posteriormente,  se realizarán talleres participativos para analizar el diseño de los proyectos de cambio que serán ejecutados y monitoreados por los sistemas locales y organizaciones de la sociedad civil de cada entidad.
+            </p>
+            <p>
+              La información sobre cada etapa del proceso la pueden consultar en <a href="https://borde.mx/incorruptible/" target="_blank">borde.mx/incorruptible/</a>
             </p>
           </v-card-text>
         </v-card>
@@ -301,15 +305,23 @@ export default {
           </v-card>
         </v-form>
         <template  v-if="step == 'axes'">
+          <v-card class="mt-3">
+            <v-card-title class="text-h5 font-weight-bold">
+              PRIMERA PARTE. Priorización de factores
+            </v-card-title>
+          </v-card>
           <v-card class="mt-3" v-for="axis in final_axes">
-            <v-card-title primary-title>
-              Eje {{axis.numeral}}. {{axis.short_name}}", cuya causa principal es "{{axis.name}}"
+            <v-card-title primary-title class="no-wrap" style="max-width: 800px;">
+              Eje {{axis.numeral}}: {{axis.short_name}}
+              <br>
+              Causa principal: {{axis.name}}
             </v-card-title>
             <v-card-text>
-              <p>
-                Ordena las siguientes causas subyacentes, elige hasta {{axis.max_election}}
-                que creas que tengan mayor prioridad de atención:
+              <p class="subtitle-1">
               </p>
+              <v-alert type="info" dense>
+                Ordena los siguientes factores que contribuyen a esa causa desplazando de una columna a otra. Elige máximo 3 factores que creas que tengan mayor prioridad de atención.
+              </v-alert>
 
               <v-row>
                 <v-col cols="6">
@@ -391,15 +403,21 @@ export default {
           </v-card>
         </template>
         <template  v-if="step == 'questions'">
+          
+          <v-card-title class="text-h5 font-weight-bold mt-3">
+            SEGUNDA PARTE. Priorización de factores
+          </v-card-title>
           <v-card 
             class="mt-3"
             v-for="question in final_questions"
           >
-            <v-card-title primary-title>
+            <v-card-title primary-title class="no-wrap" style="max-width: 800px;">
               {{question.text}} {{persona_data.state}}?
-               (Pasa la lista del lado izquierdo y ordénala)
             </v-card-title>
             <v-card-text>
+              <v-alert type="info" dense>
+                Prioriza los factores desplazando cada elemento a la columna de la derecha en orden de importancia (1 es el número con mayor importancia)
+              </v-alert>
               <v-row>
                 <v-col 
                   :cols="question.causes.length == question.causes_count
@@ -436,6 +454,9 @@ export default {
                         :key="element.id"
                       >
                         {{ element.text }}
+                        <span style="text-decoration: underline;">
+                          (Eje {{element.axis+1}})
+                        </span>                        
                       </v-card>
                     </draggable>
                   </v-card>
@@ -471,7 +492,7 @@ export default {
                         </b>
                         {{ element.text }}
                         <span style="text-decoration: underline;">
-                          (eje {{element.axis+1}})
+                          (Eje {{element.axis+1}})
                         </span>
                       </v-card>
                       <div
@@ -485,7 +506,7 @@ export default {
         
             </v-card-text>
           </v-card>
-          <v-card>
+          <v-card class="my-3">
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn
@@ -497,8 +518,8 @@ export default {
             </v-card-actions>
           </v-card>
         </template>
-        <v-alert type="success" prominent  v-if="step == 'final'">
-          Ordenamiento concluído
+        <v-alert type="success" prominent  v-if="step == 'final'" class="mt-2">
+          Ordenamiento concluído y encuesta enviada. ¡Gracias por tu participación!
         </v-alert>
       </v-col>
     </v-row>

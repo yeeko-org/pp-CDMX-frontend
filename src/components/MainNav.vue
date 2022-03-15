@@ -1,15 +1,15 @@
 <template>
-  <v-app-bar app id="app-width" height="60" color="white">
+  <v-app-bar app id="app-width" height="80" color="white">
     <v-toolbar-items 
       width="400" 
       class="mt-1"
-      
       :class="{'header-xs': $breakpoint.is.xs}"
     >
-      <router-link to="/">
-        <v-img src="/logos2.png"
-          height="56"
-          width="1000"
+      <v-spacer></v-spacer>
+      <router-link to="/" v-if="false">
+        <v-img src="/logo3.png"
+          height="80"
+          width="240"
         />
       </router-link>
       <v-col class="py-0 px-3 mt-3" v-if="false">
@@ -25,9 +25,20 @@
           />
         </a>
       </v-col>
+      <v-col class="text-h5 mt-2 font-weight-bold" cols="12" style="height: 80px;">
+        <span style="vertical-align: middle; color: #36b5a1;">
+          Encuesta 2: Selección de Causas
+        </span>
+      </v-col>
     </v-toolbar-items>
     <v-spacer></v-spacer>
     <!--<v-app-bar-nav-icon v-else @click="menu = !menu"></v-app-bar-nav-icon>-->
+    <router-link to="/">
+      <v-img src="/logo3.png"
+        height="80"
+        width="240"
+      />
+    </router-link>
 
 
     <template v-if="$breakpoint.is.smAndUp && false">
@@ -45,7 +56,7 @@
       </v-btn>-->
 
     </template>
-    <v-menu offset-y v-else>
+    <v-menu offset-y v-else-if="false">
       <template v-slot:activator="{ on }">
         <v-btn
           class="yeeko-text"

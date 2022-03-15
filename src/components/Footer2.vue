@@ -8,16 +8,24 @@ export default {
   data() {
     return {
       networks: [
-        {url: 'https://www.facebook.com/CeroDesabasto', icon:'fab fa-facebook'},
-        {url: 'https://twitter.com/cerodesabasto', icon:'fab fa-twitter'},
-        {url: 'https://nosotrxs.org/medicinas-para-todxs/', icon:'fa-globe'},
+        //{url: 'https://www.facebook.com/CeroDesabasto', icon:'fab fa-facebook'},
+        //{url: 'https://twitter.com/cerodesabasto', icon:'fab fa-twitter'},
+        {url: 'https://borde.mx/incorruptible/', icon:'fa-globe'},
       ],
+      institutions: ['cips','unam','nosotrxs','insp','udg','colmex','smsp'],
       is_mounted: false,
     }
   },
   computed:{
     is_sticker: (vm) => vm.$route.name == "sticker",
   },
+  methods: {
+    getImgUrl(n) {
+      var images = require.context('~/static/', false, /\.png$/)
+      return images(`./${n}_gris.png`)
+    }
+  },
+
   mounted(){
     this.$nextTick(()=>{
       this.is_mounted = true
@@ -33,6 +41,34 @@ export default {
     max-width="1180px"
     style="margin: 0px auto"
   >
+    <v-row v-if="false">
+      <v-col v-for="n in institutions"
+        cols="6" sm="4" class="pa-4" :key="n" align="center">
+        
+        <v-img
+          :src="getImgUrl(n)"
+          :alt="`aliado ${n}`"
+          contain
+          max-height="70"
+          max-width="350"
+        ></v-img>
+      </v-col>
+      
+    </v-row>
+    <v-card color="white text-center" style="text-align: center; width: 100%;">
+      <v-card-actions>
+        
+        <v-spacer></v-spacer>
+        <v-img src="/logos2.png"
+          height="56"
+          width="1000"
+          class="text-center"
+        />
+        <v-spacer></v-spacer>
+      </v-card-actions>
+
+      
+    </v-card>
     <v-card
       flat
       tile
@@ -54,7 +90,7 @@ export default {
             </a>
           </v-col>
           <v-col cols="12" sm="3" order="3" order-sm="2">
-            <b>Contacto:</b> contacto@bordepolitico.com.mx
+            <b>Contacto:</b> gibran@bordepolitico.com.mx
           </v-col>
           <v-col cols="7" sm="4" order="2" order-sm="3">
             <v-btn
