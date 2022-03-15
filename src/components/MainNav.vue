@@ -25,7 +25,7 @@
           />
         </a>
       </v-col>
-      <v-col class="text-h5 mt-2 font-weight-bold" cols="12" style="height: 80px;">
+      <v-col class="text-h5-sm text-h6 mt-2 font-weight-bold" cols="12" style="height: 80px;">
         <span style="vertical-align: middle; color: #36b5a1;">
           Encuesta 2: Selección de Causas
         </span>

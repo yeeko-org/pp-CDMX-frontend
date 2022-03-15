@@ -18,6 +18,8 @@ export const state = () => ({
   curr_pa_idx: undefined,
   pa_in_review: undefined,
   periods: undefined,
+  step: 'initial',
+  person_email: '',
 })
 
 export const getters = {
@@ -78,6 +80,13 @@ export const mutations = {
     state.axes = data.axes;
     state.causes = data.causes;
     state.questions = data.questions;
+  },
+  SET_STEP(state, step){
+    state.step = step
+  },
+  SET_PERSON_EMAIL(state, email){
+    console.log(email)
+    state.person_email = email
   },
   SET_FINAL_PROJECTS(state, reports){
     state.current_projects = reports;
@@ -175,6 +184,7 @@ export const actions = {
   SAVE_PERSONA ({ commit }, new_data) {
     return new Promise (resolve => {
       this.$axios.post('/sesna/persona/', new_data).then(({data})=>{
+        commit("SET_PERSON_EMAIL", data.email)
         return resolve(data)
       }).catch(({response}) => {
         console.log(response)

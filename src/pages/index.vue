@@ -1,5 +1,5 @@
 <script>
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapMutations } from "vuex";
 import draggable from 'vuedraggable'
 
 export default {
@@ -17,10 +17,10 @@ export default {
       start: false,
       person_form: false,
       touched: false,
-      person_email: null,
+      //person_email: null,
       aws_url: 'https://cdn-yeeko.s3.amazonaws.com/',
       persona_data: {},
-      step: 'initial',
+      //step: 'initial',
       //step: 'questions',
       test_step: null,
       //test_step: 'questions',
@@ -59,6 +59,8 @@ export default {
       axes: state => state.reports.axes,
       causes: state => state.reports.causes,
       questions: state => state.reports.questions,
+      step: state => state.reports.step,
+      person_email: state => state.reports.person_email,
     }),
   },
   mounted(){
@@ -76,10 +78,13 @@ export default {
               selected_causes: []
             }}
           })
-          this.step = this.test_step
+
+          this.setStep
+          (this.test_step)
         }
         else if (this.test_step){
-          this.step = this.test_step
+          this.setStep
+          (this.test_step)
         }
       })
     })
@@ -99,6 +104,10 @@ export default {
       fetchCatalogs: 'reports/FETCH_CATALOGS_SESNA',
       savePersona: 'reports/SAVE_PERSONA',
       saveChooses: 'reports/SAVE_CHOOSES',
+    }),
+    ...mapMutations({
+      setStep : 'reports/SET_STEP',
+      savePersonMail : 'reports/SET_PERSON_EMAIL',
     }),
     goToForm(elem=60, offs=30){
       this.$vuetify.goTo(elem, 
@@ -140,7 +149,8 @@ export default {
                 selected_causes: []}
               }
           })
-          this.step = 'questions'
+          this.setStep
+          ('questions')
           this.goToForm()
           this.touched = false
         })
@@ -172,7 +182,8 @@ export default {
           return [...arr, ...chooses]
         },[])
         this.saveChooses({chooses: final_chooses}).then(res=>{
-          this.step = 'final'
+          this.setStep
+          ('final')
           this.goToForm()
         })
       }
@@ -185,8 +196,9 @@ export default {
     sendData(){
       this.savePersona(this.persona_data).then(data=>{
         console.log(data)
-        this.step = 'axes'
-        this.person_email = data.email
+        this.setStep
+        ('axes')
+        //this.person_email = data.email
         this.goToForm()      
       })
     },
@@ -204,7 +216,7 @@ export default {
         v-if="is_mounted" 
         :order="($breakpoint.is.xsOnly ? 2 : 1)"
       >
-        <v-card class="pb-6">
+        <v-card class="pb-3 my-3" >
           <v-card-title primary-title>
             Introducción
           </v-card-title>
@@ -224,7 +236,7 @@ export default {
           </v-card-text>
         </v-card>
         <v-form ref="personForm" v-model="person_form" lazy-validation>
-          <v-card class="mt-3" v-if="step == 'initial'">
+          <v-card class="my-3" v-if="step == 'initial'">
             <v-card-title primary-title>
               Datos de contacto:
             </v-card-title>
@@ -305,12 +317,12 @@ export default {
           </v-card>
         </v-form>
         <template  v-if="step == 'axes'">
-          <v-card class="mt-3">
+          <v-card class="my-3">
             <v-card-title class="text-h5 font-weight-bold">
               PRIMERA PARTE. Priorización de factores
             </v-card-title>
           </v-card>
-          <v-card class="mt-3" v-for="axis in final_axes">
+          <v-card class="my-3" v-for="axis in final_axes">
             <v-card-title primary-title class="no-wrap" style="max-width: 800px;">
               Eje {{axis.numeral}}: {{axis.short_name}}
               <br>
@@ -390,7 +402,7 @@ export default {
         
             </v-card-text>
           </v-card>
-          <v-card>
+          <v-card class="my-3">
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn
@@ -408,7 +420,7 @@ export default {
             SEGUNDA PARTE. Priorización de factores
           </v-card-title>
           <v-card 
-            class="mt-3"
+            class="my-3"
             v-for="question in final_questions"
           >
             <v-card-title primary-title class="no-wrap" style="max-width: 800px;">
@@ -518,7 +530,7 @@ export default {
             </v-card-actions>
           </v-card>
         </template>
-        <v-alert type="success" prominent  v-if="step == 'final'" class="mt-2">
+        <v-alert type="success" prominent  v-if="step == 'final'" class="my-2">
           Ordenamiento concluído y encuesta enviada. ¡Gracias por tu participación!
         </v-alert>
       </v-col>
