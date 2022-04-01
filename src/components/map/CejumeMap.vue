@@ -274,7 +274,7 @@ export default {
           class="pa-0 white--text text-sm-h4"
           :class="`text-${$breakpoint.is.xsOnly ? 'subtitle-1' : 'h6' }`"
         >
-          <div class="monse">{{data[card.key].NAME_1}}</div>
+          <div class="monse font-weight-bold">{{data[card.key].NAME_1}}</div>
           <v-spacer></v-spacer>
           <v-btn
             v-if="data[card.key].url"
@@ -305,6 +305,7 @@ export default {
             v-if="!card.nat"
             cols="12"
             class="text-center percent-text white--text monse"
+            :class="{'percent-text-xs': $breakpoint.is.xsOnly}"
           >
             Total de participantes: {{data[card.key].total_format}}
           </v-col>
