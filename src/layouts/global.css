@@ -1,0 +1,9 @@
+@font-face {
+    font-family: "Montserrat";
+    src: local("Montserrat"),
+     url(~assets/Montserrat-Light.ttf) format("truetype");
+}
+
+html {
+    font-family: "Montserrat";
+}

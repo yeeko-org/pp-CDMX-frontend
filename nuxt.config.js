@@ -29,6 +29,7 @@ export default {
   ** Global CSS
   */
   css: [
+      "~layouts/global.css",
   ],
   /*
   ** Plugins to load before mounting the App
@@ -59,9 +60,9 @@ export default {
   */
   axios: {
     baseURL: process.env.NODE_ENV == 'development' 
-    //? 'http://localhost:8000/api'
-    ? 'https://ppcdmx.yeeko.org/api'
-    : 'https://ppcdmx.yeeko.org/api',
+    ? 'http://localhost:8000/api'
+    : 'https://ppcdmx.yeeko.org/api'
+    //: 'https://ppcdmx.yeeko.org/api',
   },
   /*
   ** vuetify module configuration
