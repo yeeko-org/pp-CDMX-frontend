@@ -239,8 +239,18 @@ export default {
         width: 990,
         cejume: true,
       })
-      console.log(svg)
+      /*var current_title = svg
+        .append("g")
+        .attr("transform", `translate(${vm.width / 2},-20)`);
 
+      //console.log("cleanText último de todo")
+      current_title
+        .append("text")
+        .attr("class", "y-title")
+        .style("font-size", "14pt")
+        .style("text-anchor", "middle")
+        .text(d=> "Personas que han participado en cursos, pruebas de conocimientos y capacitaciones");
+      */
     },
   },
 }
@@ -271,7 +281,7 @@ export default {
           ${card.pos_x}: ${$breakpoint.is.xsOnly ? 5 : 15}px;`"
       >
         <v-card-title
-          class="pa-0 white--text text-sm-h4"
+          class="pa-0 white--text text-sm-h4 mb-2"
           :class="`text-${$breakpoint.is.xsOnly ? 'subtitle-1' : 'h6' }`"
         >
           <div class="monse font-weight-bold">{{data[card.key].NAME_1}}</div>
@@ -310,6 +320,12 @@ export default {
             Total de participantes: {{data[card.key].total_format}}
           </v-col>
         </v-row>
+        <v-card-text class="white--text px-0 
+        -0 text-center" v-if="card.nat">
+          <div class="monse" style="line-height: 12pt; font-size: 11pt;">
+            Personas que han participado en cursos, pruebas de conocimientos y capacitaciones
+          </div>
+        </v-card-text>        
         <v-card-actions v-if="data[card.key].url" class="py-1 py-sm-2">
           <v-spacer></v-spacer>
           <v-btn
