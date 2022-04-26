@@ -186,9 +186,9 @@ export const actions = {
       this.$axios.post('/sesna/persona/', new_data).then(({data})=>{
         commit("SET_PERSON_EMAIL", data.email)
         return resolve(data)
-      }).catch(({response}) => {
-        console.log(response)
-        return resolve(response)
+      }).catch(err =>{
+        console.log(err)
+        return resolve({error:err})
       })
     })
   },
@@ -196,9 +196,9 @@ export const actions = {
     return new Promise (resolve => {
       this.$axios.post('/sesna/survey/', new_data).then(({data})=>{
         return resolve(data)
-      }).catch(({response}) => {
-        console.log(response)
-        return resolve(response)
+      }).catch(err =>{
+        console.log(err)
+        return resolve({error:err})
       })
     })
   },

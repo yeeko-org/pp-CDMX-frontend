@@ -17,6 +17,8 @@ export default {
       start: false,
       person_form: false,
       touched: false,
+      alert_error: false,
+      error_message: undefined,
       //person_email: null,
       aws_url: 'https://cdn-yeeko.s3.amazonaws.com/',
       persona_data: {},
@@ -79,12 +81,10 @@ export default {
             }}
           })
 
-          this.setStep
-          (this.test_step)
+          this.setStep(this.test_step)
         }
         else if (this.test_step){
-          this.setStep
-          (this.test_step)
+          this.setStep(this.test_step)
         }
       })
     })
@@ -141,18 +141,22 @@ export default {
         }))
 
         this.saveChooses({chooses: chooses}).then(res=>{
-          this.final_questions = this.questions.map(question=>{
-            return {...question, 
-              ...{
-                causes: [...final_causes],
-                causes_count: final_causes.length,
-                selected_causes: []}
-              }
-          })
-          this.setStep
-          ('questions')
-          this.goToForm()
-          this.touched = false
+          if (res.error){
+            this.setAlert(res.error.response.data)
+          }
+          else{
+            this.final_questions = this.questions.map(question=>{
+              return {...question, 
+                ...{
+                  causes: [...final_causes],
+                  causes_count: final_causes.length,
+                  selected_causes: []}
+                }
+            })
+            this.setStep('questions')
+            this.goToForm()
+            this.touched = false
+          }
         })
       }
       else{
@@ -182,9 +186,13 @@ export default {
           return [...arr, ...chooses]
         },[])
         this.saveChooses({chooses: final_chooses}).then(res=>{
-          this.setStep
-          ('final')
-          this.goToForm()
+          if (res.error){
+            this.setAlert(res.error.response.data)
+          }
+          else{
+            this.setStep('final')
+            this.goToForm()
+          }          
         })
       }
       else{
@@ -194,13 +202,26 @@ export default {
       }
     },
     sendData(){
-      this.savePersona(this.persona_data).then(data=>{
-        console.log(data)
-        this.setStep
-        ('axes')
-        //this.person_email = data.email
+      this.savePersona(this.persona_data).then(res=>{
+        console.log(res)
+        if (res.error){
+          this.setAlert(res.error.response.data)
+        }
+        else{
+          this.alert_error = false
+          this.setStep('axes')
+          //this.person_email = data.email          
+        }
         this.goToForm()      
       })
+    },
+    setAlert(message){
+      this.alert_error = !!message
+      this.error_message = message
+        ? typeof(message) == 'object'
+          ? message.detail || message
+          : JSON.stringify(message)
+        : '---'
     },
   },  
 }
@@ -236,6 +257,9 @@ export default {
           </v-card-text>
         </v-card>
         <v-form ref="personForm" v-model="person_form" lazy-validation>
+          <v-alert type="error" v-if="alert_error">
+            {{error_message}}
+          </v-alert>
           <v-card class="my-3" v-if="step == 'initial'">
             <v-card-title primary-title>
               Datos de contacto:
