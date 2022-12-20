@@ -1,5 +1,6 @@
 <script>
 import CejumeMap from "~/components/map/CejumeMap"
+import { mapMutations, mapActions } from "vuex";
 
 export default {
   layout: 'diamonds',
@@ -16,16 +17,23 @@ export default {
     //this.setDesign(false)
   },
   mounted(){
-    this.$store.dispatch('cejume/FETCH_CATALOGS4').then((data)=>{
+    this.setCejume()
+    this.$nextTick( () =>{
+      this.show_map = true
+    })
+    /*this.$store.dispatch('cejume/FETCH_CATALOGS4').then((data)=>{
       console.log(data)
       this.$nextTick( () =>{
         this.show_map = true
       })
-    })
+    })*/
   },
   watch:{
   },
   methods: {
+    ...mapMutations({
+      setCejume : 'cejume/SET_CEJUME',
+    }),
   },  
 }
 </script>
